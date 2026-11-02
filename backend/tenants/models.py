@@ -117,7 +117,29 @@ class TenantModel(TimeStampedModel):
             raise CrossTenantError(
                 "Cet objet appartient à une autre exploitation que l'exploitation active."
             )
+        self._check_related_tenants()
         super().save(*args, **kwargs)
+
+    def _check_related_tenants(self):
+        """Toute relation vers une autre table métier doit rester dans la même exploitation."""
+        for field in self._meta.concrete_fields:
+            if not (field.is_relation and field.many_to_one):
+                continue
+            related_model = field.related_model
+            if related_model is Organization or not issubclass(related_model, TenantModel):
+                continue
+            related_id = getattr(self, field.attname)
+            if related_id is None:
+                continue
+            related_organization = (
+                related_model.unscoped.filter(pk=related_id)
+                .values_list("organization_id", flat=True)
+                .first()
+            )
+            if related_organization != self.organization_id:
+                raise CrossTenantError(
+                    f"Le champ « {field.name} » pointe vers une autre exploitation."
+                )
 
 
 class Farm(TenantModel):
