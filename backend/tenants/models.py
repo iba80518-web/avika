@@ -4,6 +4,7 @@ from django.db import models
 from core.currencies import CURRENCY_CHOICES
 from core.models import TimeStampedModel
 
+from .context import CrossTenantError, TenantContextMissing, get_current_organization_id
 from .roles import PERMISSION_CHOICES, Role
 
 
@@ -77,10 +78,58 @@ class MembershipPermission(TimeStampedModel):
         return f"{self.membership} : {self.permission}={self.granted}"
 
 
+class TenantManager(models.Manager):
+    """Ne renvoie que les objets de l'exploitation active ; refuse de tourner sans elle."""
+
+    def get_queryset(self):
+        organization_id = get_current_organization_id()
+        if organization_id is None:
+            raise TenantContextMissing(
+                "Aucune exploitation active. Utilisez organization_context(...) "
+                "ou, pour l'administration et les scripts, Model.unscoped."
+            )
+        return super().get_queryset().filter(organization_id=organization_id)
+
+
 class TenantModel(TimeStampedModel):
     """Base de toute table métier : appartient obligatoirement à une exploitation."""
 
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="+")
 
+    # Ordre important : le premier gestionnaire déclaré devient le gestionnaire par
+    # défaut de Django (administration, validations). `objects` reste, lui, filtré
+    # et c'est celui que le code métier doit toujours utiliser.
+    unscoped = models.Manager()
+    objects = TenantManager()
+
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        active_id = get_current_organization_id()
+        if self.organization_id is None:
+            if active_id is None:
+                raise TenantContextMissing(
+                    "Impossible d'enregistrer sans exploitation (ni active, ni indiquée)."
+                )
+            self.organization_id = active_id
+        elif active_id is not None and self.organization_id != active_id:
+            raise CrossTenantError(
+                "Cet objet appartient à une autre exploitation que l'exploitation active."
+            )
+        super().save(*args, **kwargs)
+
+
+class Farm(TenantModel):
+    """Site d'une exploitation (prépare le multi-sites)."""
+
+    name = models.CharField("nom", max_length=150)
+    location = models.CharField("localisation", max_length=255, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["organization", "name"], name="unique_farm_name_per_org")
+        ]
+
+    def __str__(self):
+        return self.name
