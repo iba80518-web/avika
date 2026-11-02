@@ -16,12 +16,20 @@ def get_current_organization_id():
     return _current_organization_id.get()
 
 
+def set_organization(organization):
+    """Active une exploitation et renvoie un jeton pour la désactiver ensuite."""
+    return _current_organization_id.set(getattr(organization, "pk", organization))
+
+
+def reset_organization(token):
+    _current_organization_id.reset(token)
+
+
 @contextmanager
 def organization_context(organization):
     """Active une exploitation (objet ou identifiant) le temps d'un bloc `with`."""
-    organization_id = getattr(organization, "pk", organization)
-    token = _current_organization_id.set(organization_id)
+    token = set_organization(organization)
     try:
         yield
     finally:
-        _current_organization_id.reset(token)
+        reset_organization(token)
