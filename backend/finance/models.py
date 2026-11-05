@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
-from farming.models import Cycle
+from farming.models import Cycle, FlockEvent, ImmutableRecordError
 from inventory.models import Supplier
 from tenants.models import TenantModel
 
@@ -73,3 +73,97 @@ class Expense(TenantModel):
 
     def __str__(self):
         return f"{self.get_category_display()} {self.amount} ({self.expense_date})"
+
+
+class Sale(TenantModel):
+    """Vente de poulets d'un cycle. Le total est calculé par le serveur, jamais par le client."""
+
+    class SaleType(models.TextChoices):
+        COUNT = "count", "Au nombre"
+        WEIGHT = "weight", "Au poids"
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Valide"
+        CANCELLED = "cancelled", "Annulée"
+
+    # Sans client : vente au comptant à un client de passage (donc payée en totalité).
+    customer = models.ForeignKey(
+        Customer, null=True, blank=True, on_delete=models.PROTECT, related_name="sales"
+    )
+    cycle = models.ForeignKey(Cycle, on_delete=models.PROTECT, related_name="sales")
+    sale_date = models.DateField("date")
+    sale_type = models.CharField(max_length=10, choices=SaleType.choices)
+    # Nombre de poulets vendus : toujours renseigné, car il fait baisser l'effectif.
+    quantity = models.PositiveIntegerField("nombre de poulets")
+    # Poids total vendu (vente au poids uniquement).
+    weight_kg = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    # Prix par poulet (vente au nombre) ou par kg (vente au poids), unité minimale.
+    unit_price = models.BigIntegerField("prix unitaire")
+    total_amount = models.BigIntegerField("montant total")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    # Lien avec le journal du cheptel : la vente y a retiré des poulets.
+    flock_event = models.OneToOneField(
+        FlockEvent, null=True, blank=True, on_delete=models.PROTECT, related_name="sale"
+    )
+    # Renseigné à l'annulation : l'événement qui a remis les poulets dans l'effectif.
+    cancel_event = models.OneToOneField(
+        FlockEvent, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    note = models.TextField(blank=True)
+    uuid = models.UUIDField(default=uuid.uuid4)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["organization", "uuid"], name="unique_sale_uuid"),
+            models.CheckConstraint(condition=Q(quantity__gt=0), name="sale_quantity_positive"),
+            models.CheckConstraint(condition=Q(unit_price__gt=0), name="sale_unit_price_positive"),
+            models.CheckConstraint(condition=Q(total_amount__gt=0), name="sale_total_positive"),
+            models.CheckConstraint(
+                condition=Q(sale_type="count") | Q(weight_kg__isnull=False, weight_kg__gt=0),
+                name="sale_weight_required_when_by_weight",
+            ),
+        ]
+        indexes = [models.Index(fields=["organization", "sale_date"])]
+
+    def __str__(self):
+        return f"Vente {self.pk} : {self.quantity} poulets, {self.total_amount}"
+
+
+class Payment(TenantModel):
+    """Paiement reçu pour une vente : immuable. Plusieurs paiements possibles par vente."""
+
+    class Method(models.TextChoices):
+        CASH = "cash", "Espèces"
+        MOBILE_MONEY = "mobile_money", "Mobile money"
+        BANK_TRANSFER = "bank_transfer", "Virement"
+        OTHER = "other", "Autre"
+
+    sale = models.ForeignKey(Sale, on_delete=models.PROTECT, related_name="payments")
+    amount = models.BigIntegerField("montant")
+    payment_date = models.DateField("date")
+    method = models.CharField(max_length=20, choices=Method.choices, default=Method.CASH)
+    uuid = models.UUIDField(default=uuid.uuid4)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["organization", "uuid"], name="unique_payment_uuid"),
+            models.CheckConstraint(condition=Q(amount__gt=0), name="payment_amount_positive"),
+        ]
+        indexes = [models.Index(fields=["organization", "payment_date"])]
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ImmutableRecordError("Un paiement ne peut pas être modifié.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ImmutableRecordError("Un paiement ne peut pas être supprimé.")
+
+    def __str__(self):
+        return f"Paiement {self.amount} ({self.payment_date})"
