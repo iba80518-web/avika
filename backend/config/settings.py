@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "tenants",
     "farming",
     "inventory",
+    "finance",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
 ]
