@@ -27,6 +27,7 @@ PERMISSIONS = [
     ("generate_reports", "Générer les rapports"),
     ("manage_users", "Gérer les utilisateurs"),
     ("manage_subscription", "Gérer l'abonnement"),
+    ("view_audit", "Consulter le journal d'audit"),
 ]
 
 PERMISSION_CODES = [code for code, _ in PERMISSIONS]

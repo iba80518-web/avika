@@ -4,6 +4,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 
+from audit.services import log_action, snapshot
 from farming.models import Cycle, FlockEvent
 from farming.services import FarmingError, record_event
 
@@ -12,6 +13,15 @@ from .models import Expense, Payment, Sale
 
 class FinanceError(Exception):
     """Règle financière non respectée ; le message est destiné à l'utilisateur."""
+
+
+# Champs photographiés dans le journal d'audit.
+EXPENSE_FIELDS = ["amount", "expense_date", "category", "description", "supplier_id", "cycle_id"]
+SALE_FIELDS = [
+    "cycle_id", "customer_id", "sale_date", "sale_type", "quantity", "unit_price",
+    "total_amount", "status",
+]
+PAYMENT_FIELDS = ["sale_id", "amount", "payment_date", "method"]
 
 
 # ---------------------------------------------------------------- dépenses
@@ -67,6 +77,13 @@ def record_expense(
         cycle=cycle,
         created_by=user,
         **extra,
+    )
+    log_action(
+        user=user,
+        action="expense.created",
+        obj=expense,
+        summary=f"Dépense {expense.get_category_display()} de {expense.amount}",
+        after=snapshot(expense, EXPENSE_FIELDS),
     )
     return expense, True
 
@@ -199,6 +216,13 @@ def record_sale(
             method=payment_method,
             created_by=user,
         )
+    log_action(
+        user=user,
+        action="sale.created",
+        obj=sale,
+        summary=f"Vente de {sale.quantity} poulets pour {sale.total_amount}",
+        after=snapshot(sale, SALE_FIELDS),
+    )
     return sale, True
 
 
@@ -236,6 +260,13 @@ def record_payment(
         created_by=user,
         **extra,
     )
+    log_action(
+        user=user,
+        action="payment.created",
+        obj=payment,
+        summary=f"Paiement de {payment.amount} pour la vente {locked.pk}",
+        after=snapshot(payment, PAYMENT_FIELDS),
+    )
     return payment, True
 
 
@@ -268,4 +299,12 @@ def cancel_sale(sale, *, user=None, reason=""):
     locked.status = Sale.Status.CANCELLED
     locked.cancel_event = event
     locked.save(update_fields=["status", "cancel_event", "updated_at"])
+    log_action(
+        user=user,
+        action="sale.cancelled",
+        obj=locked,
+        summary=text,
+        before={"status": Sale.Status.ACTIVE.value},
+        after={"status": Sale.Status.CANCELLED.value},
+    )
     return locked

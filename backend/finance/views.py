@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import BigIntegerField, F, Sum, Value
 from django.db.models.functions import Coalesce
 from rest_framework import mixins, viewsets
@@ -5,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from audit.services import log_action, snapshot
 from tenants.api import TenantAPIMixin
 
 from .models import Customer, Expense, Payment, Sale
@@ -78,6 +80,20 @@ class ExpenseViewSet(_NoDeleteViewSet):
         except FinanceError as error:
             raise ValidationError({"detail": str(error)})
         return Response(ExpenseSerializer(expense).data, status=201 if created else 200)
+
+    def perform_update(self, serializer):
+        fields = ["amount", "expense_date", "category", "description", "supplier_id", "cycle_id"]
+        with transaction.atomic():
+            before = snapshot(serializer.instance, fields)
+            expense = serializer.save()
+            log_action(
+                user=self.request.user,
+                action="expense.updated",
+                obj=expense,
+                summary=f"Dépense {expense.pk} modifiée",
+                before=before,
+                after=snapshot(expense, fields),
+            )
 
 
 class SaleViewSet(
