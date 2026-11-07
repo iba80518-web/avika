@@ -7,6 +7,7 @@ from farming.models import Cycle, FlockEvent
 from farming.services import cycle_summary
 from finance.models import Expense, Payment, Sale
 from finance.profitability import cycle_birds_sold
+from health.services import reminders as health_reminders
 from inventory.models import Product
 from inventory.services import is_low, stock_snapshot
 
@@ -82,7 +83,25 @@ def finance_overview(today):
     }
 
 
-def build_dashboard(*, include_stock, include_finance):
+def health_overview(today):
+    """Tâches de santé à faire : en retard, aujourd'hui, demain."""
+    grouped = health_reminders(today)
+    return {
+        key: [
+            {
+                "id": task.pk,
+                "name": task.name,
+                "kind": task.kind,
+                "due_date": task.due_date.isoformat(),
+                "cycle_name": task.cycle.name,
+            }
+            for task in tasks
+        ]
+        for key, tasks in grouped.items()
+    }
+
+
+def build_dashboard(*, include_stock, include_finance, include_health=False):
     """Tableau de bord de l'exploitation active. Les blocs sensibles sont omis (None) si non autorisés."""
     today = timezone.localdate()
 
@@ -117,4 +136,5 @@ def build_dashboard(*, include_stock, include_finance):
         "mortality_alerts": alerts,
         "low_stock": low_stock_products() if include_stock else None,
         "finance": finance_overview(today) if include_finance else None,
+        "health_reminders": health_overview(today) if include_health else None,
     }

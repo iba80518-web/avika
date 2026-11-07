@@ -61,6 +61,16 @@ def cycle_feed_cost(cycle):
     return total or 0
 
 
+def cycle_health_cost(cycle):
+    """Coût des vaccins et médicaments consommés par un cycle (somme des sorties de stock)."""
+    total = StockMovement.objects.filter(
+        cycle=cycle,
+        movement_type=MovementType.EXIT.value,
+        product__product_type__in=[Product.ProductType.VACCINE, Product.ProductType.MEDICINE],
+    ).aggregate(total=Sum("total_cost"))["total"]
+    return total or 0
+
+
 def _share_of_value(value, quantity, stock):
     """Part de la valeur correspondant à `quantity` sur `stock`, arrondie à l'unité."""
     if stock <= 0:

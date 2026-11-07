@@ -22,5 +22,6 @@ class DashboardViewSet(TenantAPIMixin, viewsets.GenericViewSet):
         data = build_dashboard(
             include_stock=has_permission(membership, "manage_feed"),
             include_finance=has_permission(membership, "view_finances"),
+            include_health=has_permission(membership, "manage_health"),
         )
         return Response(data)

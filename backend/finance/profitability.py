@@ -3,7 +3,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.db.models import Sum
 
 from farming.services import cycle_summary
-from inventory.services import cycle_feed_cost
+from inventory.services import cycle_feed_cost, cycle_health_cost
 
 from .models import Sale
 from .services import cycle_expense_total, cycle_payments_total, cycle_sales_total
@@ -30,7 +30,7 @@ def cycle_profitability(cycle):
     - chiffre d'affaires  = ventes valides, payées ou non
     - encaissements       = paiements reçus
     - créances            = chiffre d'affaires - encaissements
-    - coût de production  = dépenses du cycle + aliment consommé par le cycle
+    - coût de production  = dépenses du cycle + aliment et produits de santé consommés
     - résultat            = chiffre d'affaires - coût de production
     - marge (%)           = résultat / chiffre d'affaires x 100
     """
@@ -38,7 +38,8 @@ def cycle_profitability(cycle):
     collected = cycle_payments_total(cycle)
     expenses = cycle_expense_total(cycle)
     feed_cost = cycle_feed_cost(cycle)
-    production_cost = expenses + feed_cost
+    health_cost = cycle_health_cost(cycle)
+    production_cost = expenses + feed_cost + health_cost
     result = revenue - production_cost
 
     summary = cycle_summary(cycle)
@@ -52,6 +53,7 @@ def cycle_profitability(cycle):
         "receivables": revenue - collected,
         "expenses": expenses,
         "feed_cost": feed_cost,
+        "health_cost": health_cost,
         "production_cost": production_cost,
         "result": result,
         "margin_percent": round(result * 100 / revenue, 2) if revenue else None,
