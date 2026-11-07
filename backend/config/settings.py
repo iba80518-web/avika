@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "finance",
     "audit",
     "dashboard",
+    "health",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
 ]
