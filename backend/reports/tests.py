@@ -120,3 +120,19 @@ class ReportApiTests(APITestCase):
     def test_06_unknown_cycle_and_anonymous(self):
         self.assertEqual(self.ca.get("/api/v1/reports/999999/whatsapp/").status_code, 404)
         self.assertIn(APIClient().get(self.url).status_code, (401, 403))
+
+    def test_07_pdf_is_a_real_pdf_download(self):
+        response = self.ca.get(f"/api/v1/reports/{self.cycle['id']}/pdf/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("attachment", response["Content-Disposition"])
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_08_pdf_follows_the_same_rights(self):
+        url = f"/api/v1/reports/{self.cycle['id']}/pdf/"
+        self.assertEqual(self.member(self.a, "emp@test.com", Role.EMPLOYEE).get(url).status_code, 200)
+        self.assertEqual(self.member(self.a, "vet@test.com", Role.VET).get(url).status_code, 403)
+        self.assertEqual(self.cb.get(url).status_code, 404)
+
+    def test_09_pdf_unknown_cycle(self):
+        self.assertEqual(self.ca.get("/api/v1/reports/999999/pdf/").status_code, 404)
