@@ -125,3 +125,20 @@ import sys  # noqa: E402
 
 if "test" in sys.argv:
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+
+# --- Sécurité en production ---
+# Actif seulement quand DJANGO_DEBUG est faux (serveur réel). En développement local
+# (DJANGO_DEBUG=true) rien de tout cela ne s'applique, pour ne pas bloquer http://localhost.
+if not DEBUG:
+    # Derrière Nginx : il transmet le protocole d'origine, Django sait ainsi que la requête était en HTTPS.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = env.bool("DJANGO_SSL_REDIRECT", default=True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS : on démarre à 1 heure. Une fois que tout est vérifié en HTTPS, on l'augmente
+    # (86400 puis 31536000) via la variable DJANGO_HSTS_SECONDS, sans toucher au code.
+    SECURE_HSTS_SECONDS = env.int("DJANGO_HSTS_SECONDS", default=3600)
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
