@@ -1,6 +1,6 @@
 {
-  "name": "frontend",
-  "short_name": "frontend",
+  "name": "AVIKA, gestion avicole",
+  "short_name": "AVIKA",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
@@ -53,5 +53,9 @@
       "type": "image/png",
       "purpose": "maskable any"
     }
-  ]
+  ],
+  "description": "Suivez vos bandes de poulets, votre stock et votre trésorerie.",
+  "lang": "fr",
+  "theme_color": "#0f7b5f",
+  "background_color": "#e7f5ef"
 }

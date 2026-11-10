@@ -1,1 +1,236 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==========================================================================
+   AVIKA : système de design
+   Verre dépoli sur un fond de couleurs douces. Tout est piloté par les variables ci-dessous :
+   changer une couleur ici la change dans toute l'application, en clair comme en sombre.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* Typographie : polices du système, donc aucun téléchargement (hors connexion, réseau lent) */
+  --font-sans: 'Avenir Next', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  /* Couleurs */
+  --ink: #10312b;
+  --ink-soft: #4a6a62;
+  --leaf: #0f7b5f;
+  --leaf-strong: #0a5c47;
+  --on-leaf: #ffffff;
+  --yolk: #f2b33d;
+  --danger: #b83a2a;
+  --danger-bg: rgba(184, 58, 42, 0.1);
+  --canvas: #e7f5ef;
+  --blob-a: #b4e6d3;
+  --blob-b: #bfe0f3;
+  --blob-c: #fbe3a8;
+
+  /* Verre */
+  --glass: rgba(255, 255, 255, 0.58);
+  --glass-strong: rgba(255, 255, 255, 0.82);
+  --glass-edge: rgba(255, 255, 255, 0.78);
+  --shadow: 0 12px 32px rgba(16, 49, 43, 0.1);
+
+  /* Formes */
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --ink: #e6f5ef;
+    --ink-soft: #9fbfb4;
+    --leaf: #3dd6a0;
+    --leaf-strong: #6ee3b8;
+    --on-leaf: #05231b;
+    --yolk: #f7c65a;
+    --danger: #ff9a8a;
+    --danger-bg: rgba(255, 154, 138, 0.14);
+    --canvas: #071c18;
+    --blob-a: #0f5a46;
+    --blob-b: #0d4a63;
+    --blob-c: #5a4513;
+    --glass: rgba(255, 255, 255, 0.07);
+    --glass-strong: rgba(255, 255, 255, 0.13);
+    --glass-edge: rgba(255, 255, 255, 0.14);
+    --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--canvas);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fond : trois halos de couleur qui dérivent très lentement derrière le verre */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(46rem 32rem at 10% 6%, var(--blob-a), transparent 66%),
+    radial-gradient(40rem 30rem at 94% 16%, var(--blob-b), transparent 66%),
+    radial-gradient(38rem 28rem at 72% 98%, var(--blob-c), transparent 62%);
+  animation: drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  to {
+    transform: scale(1.08) translate3d(-1.5%, 1%, 0);
+  }
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+p {
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--leaf) 75%, white);
+  outline-offset: 3px;
+}
+
+/* ---------- Carte en verre ---------- */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* Navigateur sans flou, ou préférence « réduire la transparence » : verre plus opaque, lisible */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--glass-strong);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--glass-strong);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* ---------- Boutons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.4rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-weight: 650;
+  color: var(--on-leaf);
+  background: var(--leaf);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--leaf) 32%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  background: var(--leaf-strong);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: progress;
+  transform: none;
+}
+
+.btn--ghost {
+  color: var(--ink);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--glass-edge);
+}
+
+.btn--ghost:hover {
+  background: var(--glass);
+}
+
+/* ---------- Champs de formulaire (16 px : évite le zoom automatique sur téléphone) ---------- */
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field > label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.field input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 1rem;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--glass-strong);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.field input:focus-visible {
+  outline: none;
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 22%, transparent);
+}
+
+/* ---------- Respect de « réduire les animations » ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

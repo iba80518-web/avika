@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+.home {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.home__card {
+  width: min(100%, 30rem);
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+  padding: clamp(1.5rem, 5vw, 2.25rem);
+
+  h1 {
+    font-size: clamp(1.8rem, 7vw, 2.4rem);
+  }
+}
+
+.home__farm {
+  font-weight: 650;
+  color: var(--leaf-strong);
+}
+
+.home__text {
+  color: var(--ink-soft);
+}
