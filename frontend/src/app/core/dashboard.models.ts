@@ -34,11 +34,20 @@ export interface FinanceSummary {
   receivables_total: number;
 }
 
+// Pic de mortalité du jour (règle RG-MORT-02 du serveur).
+export interface MortalityAlert {
+  cycle: number;
+  cycle_name: string;
+  today: number;
+  daily_average: number;
+  message: string;
+}
+
 export interface DashboardData {
   date: string;
   active_cycles: ActiveCycle[];
   birds_alive: number;
-  mortality_alerts: Record<string, unknown>[];
+  mortality_alerts: MortalityAlert[];
   low_stock: LowStockItem[];
   finance?: FinanceSummary | null;
   health_reminders?: {

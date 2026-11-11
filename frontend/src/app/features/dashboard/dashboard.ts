@@ -42,15 +42,18 @@ export class Dashboard {
   protected readonly money = formatMoney;
   protected readonly compact = formatCompact;
   protected readonly ringRadius = RING_RADIUS;
+  protected readonly average = (value: number): string =>
+    (Math.round(value * 10) / 10).toString().replace('.', ',');
 
   protected readonly today = computed(() => {
     const value = this.data()?.date;
     if (!value) return '';
-    return new Date(`${value}T00:00:00`).toLocaleDateString('fr-FR', {
+    const text = new Date(`${value}T00:00:00`).toLocaleDateString('fr-FR', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
     });
+    return text.charAt(0).toUpperCase() + text.slice(1);
   });
 
   // Barres du mois : chaque hauteur est relative à la plus grande valeur.
@@ -122,10 +125,5 @@ export class Dashboard {
 
   protected kindLabel(kind: string): string {
     return KIND_LABELS[kind] ?? kind;
-  }
-
-  protected alertLabel(alert: Record<string, unknown>): string {
-    const text = alert['message'] ?? alert['cycle_name'] ?? alert['cycle'] ?? alert['name'];
-    return typeof text === 'string' ? text : 'Alerte de mortalité à examiner';
   }
 }

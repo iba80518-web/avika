@@ -76,6 +76,19 @@ describe('Dashboard', () => {
     expect(root.textContent).toContain('Volailles vivantes');
   });
 
+  it('détaille un pic de mortalité', async () => {
+    http.expectOne('/api/v1/dashboard/').flush({
+      ...SAMPLE,
+      mortality_alerts: [
+        { cycle: 2, cycle_name: 'Démo Bande B', today: 20, daily_average: 6, message: 'x' },
+      ],
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('20 morts aujourd’hui');
+    expect(root.textContent).toContain('habituellement 6 par jour');
+  });
+
   it('propose de réessayer hors connexion', async () => {
     http.expectOne('/api/v1/dashboard/').error(new ProgressEvent('error'));
     await fixture.whenStable();

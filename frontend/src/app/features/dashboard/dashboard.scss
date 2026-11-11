@@ -21,7 +21,6 @@
 }
 
 .eyebrow {
-  text-transform: capitalize;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -205,8 +204,12 @@
 .ring__percent {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.15rem;
   font-size: 2.2rem;
   font-weight: 800;
 

@@ -115,13 +115,16 @@
 
     <section class="attention">
       <article class="card glass">
-        <h2>Alertes de mortalité</h2>
+        <h2>Pics de mortalité</h2>
         @if (d.mortality_alerts.length === 0) {
-          <p class="ok">Aucune alerte. Tout est en ordre.</p>
+          <p class="ok">Aucun pic de mortalité aujourd’hui.</p>
         }
         <ul class="list">
           @for (alert of d.mortality_alerts; track $index) {
-            <li><span class="pill pill--danger">Alerte</span> {{ alertLabel(alert) }}</li>
+            <li>
+              <strong><span class="pill pill--danger">Alerte</span> {{ alert.cycle_name }}</strong>
+              <span class="muted">{{ alert.today }} morts aujourd’hui (habituellement {{ average(alert.daily_average) }} par jour)</span>
+            </li>
           }
         </ul>
       </article>
