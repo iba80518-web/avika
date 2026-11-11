@@ -1,0 +1,163 @@
+<div class="page">
+  <header class="page__head">
+    <div>
+      <p class="eyebrow">{{ today() }}</p>
+      <h1>Tableau de bord</h1>
+    </div>
+    <button type="button" class="btn btn--ghost" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Actualisation…' : 'Actualiser' }}
+    </button>
+  </header>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !data()) {
+    <div class="kpis" aria-busy="true">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="kpi glass skeleton"></div>
+      }
+    </div>
+  }
+
+  @if (data(); as d) {
+    <section class="kpis" aria-label="Chiffres clés">
+      <article class="kpi glass">
+        <span class="kpi__label">Volailles vivantes</span>
+        <strong class="kpi__value">{{ number(d.birds_alive) }}</strong>
+        <span class="kpi__hint">{{ d.active_cycles.length }} bande(s) active(s)</span>
+      </article>
+      @if (d.finance; as f) {
+        <article class="kpi glass">
+          <span class="kpi__label">Ventes du mois</span>
+          <strong class="kpi__value">{{ compact(f.revenue_month) }} <small>GNF</small></strong>
+          <span class="kpi__hint">Encaissé : {{ money(f.collected_month) }}</span>
+        </article>
+        <article class="kpi glass">
+          <span class="kpi__label">Dépenses du mois</span>
+          <strong class="kpi__value">{{ compact(f.expenses_month) }} <small>GNF</small></strong>
+          <span class="kpi__hint">{{ money(f.expenses_month) }}</span>
+        </article>
+        <article class="kpi glass">
+          <span class="kpi__label">Reste à encaisser</span>
+          <strong class="kpi__value">{{ compact(f.receivables_total) }} <small>GNF</small></strong>
+          <span class="kpi__hint">{{ money(f.receivables_total) }}</span>
+        </article>
+      }
+    </section>
+
+    @if (d.finance) {
+      <section class="charts">
+        <article class="card glass">
+          <h2>Le mois en chiffres</h2>
+          <div class="bars" role="img" aria-label="Ventes, encaissé, dépenses et reste à encaisser du mois">
+            @for (bar of bars(); track bar.label) {
+              <div class="bar">
+                <span class="bar__value">{{ compact(bar.value) }}</span>
+                <div class="bar__track">
+                  <div class="bar__fill bar__fill--{{ bar.tone }}" [style.height.%]="bar.height"></div>
+                </div>
+                <span class="bar__label">{{ bar.label }}</span>
+              </div>
+            }
+          </div>
+        </article>
+
+        <article class="card glass ring">
+          <h2>Taux d’encaissement</h2>
+          <div class="ring__figure">
+            <svg viewBox="0 0 120 120" role="img" [attr.aria-label]="collectionRate() + ' % encaissé'">
+              <circle class="ring__bg" cx="60" cy="60" [attr.r]="ringRadius" />
+              <circle
+                class="ring__value"
+                cx="60"
+                cy="60"
+                [attr.r]="ringRadius"
+                [attr.stroke-dasharray]="ringDash()"
+                transform="rotate(-90 60 60)"
+              />
+            </svg>
+            <strong class="ring__percent">{{ collectionRate() }}<small>%</small></strong>
+          </div>
+          <p class="muted">des ventes du mois sont déjà payées</p>
+        </article>
+      </section>
+    }
+
+    <section class="card glass">
+      <h2>Bandes en cours</h2>
+      @if (d.active_cycles.length === 0) {
+        <p class="muted">Aucune bande active pour le moment.</p>
+      }
+      <ul class="cycles">
+        @for (c of d.active_cycles; track c.id) {
+          <li class="cycle">
+            <div class="cycle__main">
+              <strong>{{ c.name }}</strong>
+              <span class="muted">{{ c.coop }} · jour {{ c.day_number }}</span>
+            </div>
+            <dl class="cycle__stats">
+              <div><dt>Effectif</dt><dd>{{ number(c.current_count) }}</dd></div>
+              <div><dt>Vendus</dt><dd>{{ number(c.birds_sold) }}</dd></div>
+              <div>
+                <dt>Mortalité</dt>
+                <dd><span class="pill pill--{{ mortalityTone(c.mortality_rate) }}">{{ c.mortality_rate }} %</span></dd>
+              </div>
+            </dl>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="attention">
+      <article class="card glass">
+        <h2>Alertes de mortalité</h2>
+        @if (d.mortality_alerts.length === 0) {
+          <p class="ok">Aucune alerte. Tout est en ordre.</p>
+        }
+        <ul class="list">
+          @for (alert of d.mortality_alerts; track $index) {
+            <li><span class="pill pill--danger">Alerte</span> {{ alertLabel(alert) }}</li>
+          }
+        </ul>
+      </article>
+
+      <article class="card glass">
+        <h2>Stock bas</h2>
+        @if (d.low_stock.length === 0) {
+          <p class="ok">Tous les stocks sont suffisants.</p>
+        }
+        <ul class="list">
+          @for (item of d.low_stock; track item.id) {
+            <li>
+              <strong>{{ item.name }}</strong>
+              <span class="muted">{{ item.stock }} {{ item.unit }} restants (seuil {{ item.threshold }})</span>
+            </li>
+          }
+        </ul>
+      </article>
+
+      <article class="card glass">
+        <h2>Rappels sanitaires</h2>
+        @if (reminderGroups().length === 0) {
+          <p class="ok">Rien à faire pour l’instant.</p>
+        }
+        @for (group of reminderGroups(); track group.title) {
+          <h3 class="group group--{{ group.tone }}">{{ group.title }}</h3>
+          <ul class="list">
+            @for (item of group.items; track item.id) {
+              <li>
+                <strong>{{ item.name }}</strong>
+                <span class="muted">{{ kindLabel(item.kind) }} · {{ item.cycle_name }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+    </section>
+  }
+</div>

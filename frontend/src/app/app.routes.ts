@@ -9,11 +9,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/login/login').then((module) => module.Login),
   },
   {
+    // Tout ce qui est protégé vit dans le shell (menu + zone de contenu).
     path: '',
-    pathMatch: 'full',
-    title: 'Accueil — AVIKA',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/home/home').then((module) => module.Home),
+    loadComponent: () => import('./features/shell/shell').then((module) => module.Shell),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Tableau de bord — AVIKA',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard').then((module) => module.Dashboard),
+      },
+    ],
   },
   { path: '**', redirectTo: '' },
 ];
