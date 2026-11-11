@@ -23,7 +23,7 @@
             class="nav__item"
             [routerLink]="path"
             routerLinkActive="is-active"
-            [routerLinkActiveOptions]="{ exact: true }"
+            [routerLinkActiveOptions]="{ exact: path === '/' }"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="item.icon" /></svg>
             <span>{{ item.label }}</span>

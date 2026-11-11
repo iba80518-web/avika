@@ -1,0 +1,197 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.page__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h1 {
+    font-size: clamp(1.7rem, 5vw, 2.3rem);
+  }
+}
+
+.eyebrow,
+.muted {
+  color: var(--ink-soft);
+}
+
+.eyebrow {
+  font-weight: 600;
+}
+
+.muted {
+  font-size: 0.925rem;
+}
+
+.filters {
+  display: inline-flex;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+
+  button {
+    min-height: 40px;
+    padding: 0 1.1rem;
+    border: 0;
+    border-radius: 999px;
+    font: inherit;
+    font-weight: 650;
+    color: var(--ink-soft);
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  button.is-on {
+    color: var(--on-leaf);
+    background: var(--leaf);
+  }
+}
+
+.grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.cycle {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.2rem;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+  animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.cycle:hover {
+  transform: translateY(-2px);
+}
+
+.cycle:active {
+  transform: scale(0.99);
+}
+
+.cycle__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  > div {
+    display: grid;
+  }
+}
+
+.cycle__name {
+  font-size: 1.1rem;
+}
+
+.cycle__count {
+  display: grid;
+
+  strong {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+}
+
+.meter {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  overflow: hidden;
+}
+
+.meter__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--leaf), color-mix(in srgb, var(--leaf) 55%, var(--yolk)));
+  transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pill {
+  flex-shrink: 0;
+  padding: 0.1rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pill--ok {
+  color: var(--leaf-strong);
+  background: color-mix(in srgb, var(--leaf) 16%, transparent);
+}
+
+.pill--warn {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--yolk) 45%, transparent);
+}
+
+.pill--done {
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
+.pill--danger {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.state,
+.empty {
+  padding: 1.1rem 1.25rem;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.skeleton {
+  min-height: 11rem;
+  background: linear-gradient(100deg, var(--glass) 30%, var(--glass-strong) 50%, var(--glass) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (min-width: 700px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

@@ -21,6 +21,17 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/dashboard').then((module) => module.Dashboard),
       },
+      {
+        path: 'bandes',
+        title: 'Bandes — AVIKA',
+        loadComponent: () => import('./features/cycles/cycles').then((module) => module.Cycles),
+      },
+      {
+        path: 'bandes/:id',
+        title: 'Détail de la bande — AVIKA',
+        loadComponent: () =>
+          import('./features/cycle-detail/cycle-detail').then((module) => module.CycleDetail),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

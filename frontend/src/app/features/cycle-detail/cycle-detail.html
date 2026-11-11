@@ -1,0 +1,118 @@
+<div class="page">
+  <a class="back" routerLink="/bandes">← Bandes</a>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !cycle() && !error()) {
+    <div class="skeleton glass" aria-busy="true"></div>
+  }
+
+  @if (cycle(); as c) {
+    <header class="head">
+      <div>
+        <p class="muted">{{ coopName() }}</p>
+        <h1>{{ c.name }}</h1>
+      </div>
+      <span class="pill">{{ statusLabel() }}</span>
+    </header>
+
+    @if (summary(); as s) {
+      <section class="kpis" aria-label="Chiffres de la bande">
+        <article class="kpi glass">
+          <span class="kpi__label">Effectif actuel</span>
+          <strong class="kpi__value">{{ number(s.current_count) }}</strong>
+          <span class="muted">sur {{ number(s.initial_count) }} au départ</span>
+        </article>
+        <article class="kpi glass">
+          <span class="kpi__label">Mortalité</span>
+          <strong class="kpi__value">{{ s.mortality_rate }} <small>%</small></strong>
+          <span class="muted"><span class="pill pill--{{ mortalityTone() }}">{{ number(s.mortality) }} morts</span></span>
+        </article>
+        <article class="kpi glass">
+          <span class="kpi__label">Vendus</span>
+          <strong class="kpi__value">{{ number(s.sold) }}</strong>
+          <span class="muted">depuis le début</span>
+        </article>
+        <article class="kpi glass">
+          <span class="kpi__label">Âge de la bande</span>
+          <strong class="kpi__value">Jour {{ day(c.start_date) }}</strong>
+          <span class="muted">début : {{ shortDate(c.start_date) }}</span>
+        </article>
+      </section>
+    }
+
+    @if (canRecord()) {
+      <section class="card glass">
+        <h2>Enregistrer une mortalité</h2>
+        <form class="entry" (submit)="onSubmit($event)" novalidate>
+          <div class="stepper">
+            <button type="button" class="stepper__btn" aria-label="Moins un" (click)="step(-1)">−</button>
+            <input
+              id="quantity"
+              type="number"
+              inputmode="numeric"
+              min="1"
+              [value]="quantity()"
+              (input)="onQuantity($event)"
+              aria-label="Nombre de poulets morts"
+            />
+            <button type="button" class="stepper__btn" aria-label="Plus un" (click)="step(1)">+</button>
+          </div>
+
+          <div class="chips" role="group" aria-label="Cause supposée">
+            @for (item of causes; track item) {
+              <button
+                type="button"
+                class="chip"
+                [class.is-on]="cause() === item"
+                [attr.aria-pressed]="cause() === item"
+                (click)="pickCause(item)"
+              >
+                {{ item }}
+              </button>
+            }
+          </div>
+
+          <div class="field">
+            <label for="date">Date</label>
+            <input id="date" type="date" [value]="date()" [max]="today" (input)="onDate($event)" />
+          </div>
+
+          @if (formError(); as message) {
+            <p class="form-error" role="alert">{{ message }}</p>
+          }
+          @if (notice(); as message) {
+            <p class="form-ok" role="status">{{ message }}</p>
+          }
+
+          <button type="submit" class="btn" [disabled]="saving()">
+            {{ saving() ? 'Enregistrement…' : 'Enregistrer la mortalité' }}
+          </button>
+        </form>
+      </section>
+    }
+
+    <section class="card glass">
+      <h2>Historique</h2>
+      @if (events().length === 0) {
+        <p class="muted">Aucun événement pour le moment.</p>
+      }
+      <ul class="events">
+        @for (e of events(); track e.id) {
+          <li>
+            <div>
+              <strong>{{ eventLabel(e) }}</strong>
+              <span class="muted">{{ shortDate(e.event_date) }}@if (e.cause) { · {{ e.cause }} }</span>
+            </div>
+            <strong class="events__qty">{{ signed(e) }}</strong>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

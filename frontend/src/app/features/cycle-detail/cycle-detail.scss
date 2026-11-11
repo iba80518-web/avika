@@ -1,0 +1,254 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.back {
+  justify-self: start;
+  padding: 0.4rem 0;
+  font-weight: 650;
+  color: var(--leaf-strong);
+  text-decoration: none;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+
+  h1 {
+    font-size: clamp(1.7rem, 5vw, 2.3rem);
+  }
+}
+
+.muted {
+  color: var(--ink-soft);
+  font-size: 0.925rem;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.1rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--leaf-strong);
+  background: color-mix(in srgb, var(--leaf) 16%, transparent);
+}
+
+.pill--warn {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--yolk) 45%, transparent);
+}
+
+.pill--danger {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+}
+
+.kpi {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1.1rem 1.2rem;
+  align-content: start;
+}
+
+.kpi__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.kpi__value {
+  font-size: clamp(1.6rem, 6vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+
+  small {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+}
+
+.card {
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.9rem;
+
+  h2 {
+    font-size: 1.05rem;
+  }
+}
+
+/* ---------- Saisie rapide ---------- */
+.entry {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.stepper {
+  display: grid;
+  grid-template-columns: 4rem 1fr 4rem;
+  gap: 0.75rem;
+  align-items: center;
+
+  input {
+    width: 100%;
+    min-height: 4rem;
+    border: 1.5px solid var(--glass-edge);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: 2.2rem;
+    font-weight: 800;
+    text-align: center;
+    color: var(--ink);
+    background: var(--glass-strong);
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input:focus-visible {
+    outline: none;
+    border-color: var(--leaf);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 22%, transparent);
+  }
+}
+
+.stepper__btn {
+  min-height: 4rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--leaf-strong);
+  background: color-mix(in srgb, var(--leaf) 14%, transparent);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.stepper__btn:active {
+  transform: scale(0.94);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--glass);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.chip.is-on {
+  color: var(--on-leaf);
+  background: var(--leaf);
+  border-color: var(--leaf);
+}
+
+.form-error,
+.form-ok {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.925rem;
+}
+
+.form-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.form-ok {
+  color: var(--leaf-strong);
+  background: color-mix(in srgb, var(--leaf) 14%, transparent);
+}
+
+/* ---------- Historique ---------- */
+.events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+
+    > div {
+      display: grid;
+    }
+  }
+
+  li:last-child {
+    border-bottom: 0;
+  }
+}
+
+.events__qty {
+  font-size: 1.1rem;
+}
+
+.state {
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.skeleton {
+  min-height: 12rem;
+  background: linear-gradient(100deg, var(--glass) 30%, var(--glass-strong) 50%, var(--glass) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (min-width: 700px) {
+  .kpis {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

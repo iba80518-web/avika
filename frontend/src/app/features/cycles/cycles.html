@@ -1,0 +1,72 @@
+<div class="page">
+  <header class="page__head">
+    <div>
+      <p class="eyebrow">Élevage</p>
+      <h1>Bandes</h1>
+    </div>
+    <div class="filters" role="group" aria-label="Filtrer les bandes">
+      <button type="button" [class.is-on]="filter() === 'active'" (click)="filter.set('active')">
+        En cours
+      </button>
+      <button type="button" [class.is-on]="filter() === 'all'" (click)="filter.set('all')">
+        Toutes
+      </button>
+    </div>
+  </header>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && cycles().length === 0 && !error()) {
+    <div class="grid" aria-busy="true">
+      @for (i of [1, 2]; track i) {
+        <div class="cycle glass skeleton"></div>
+      }
+    </div>
+  }
+
+  @if (!loading() && !error() && visible().length === 0) {
+    <p class="empty glass">
+      {{ filter() === 'active' ? 'Aucune bande en cours.' : 'Aucune bande enregistrée.' }}
+    </p>
+  }
+
+  <div class="grid">
+    @for (c of visible(); track c.id) {
+      <a class="cycle glass" [routerLink]="['/bandes', c.id]">
+        <div class="cycle__top">
+          <div>
+            <strong class="cycle__name">{{ c.name }}</strong>
+            <span class="muted">{{ coopNames()[c.coop] ?? 'Poulailler ' + c.coop }}</span>
+          </div>
+          <span class="pill pill--{{ tone(c) }}">{{ statusLabel(c) }}</span>
+        </div>
+
+        <div class="cycle__count">
+          <strong>{{ number(c.current_count) }}</strong>
+          <span class="muted">sur {{ number(c.initial_count) }} poulets au départ</span>
+        </div>
+
+        <div class="meter" role="img" [attr.aria-label]="alivePercent(c) + ' % de l’effectif restant'">
+          <div class="meter__fill" [style.width.%]="alivePercent(c)"></div>
+        </div>
+
+        <p class="muted">
+          @if (c.status === 'active') {
+            Jour {{ day(c.start_date) }}
+          } @else {
+            Débutée le {{ c.start_date }}
+          }
+        </p>
+      </a>
+    }
+  </div>
+
+  @if (total() > cycles().length) {
+    <p class="muted">Affichage des {{ cycles().length }} premières bandes sur {{ total() }}.</p>
+  }
+</div>
