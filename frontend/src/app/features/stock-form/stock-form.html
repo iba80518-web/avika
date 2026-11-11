@@ -1,0 +1,58 @@
+<div class="page">
+  <a class="back" routerLink="/stock">← Stock</a>
+
+  <header>
+    <h1>Nouveau produit</h1>
+    <p class="muted">Aliment, vaccin, médicament… Vous enregistrerez ensuite vos achats et vos sorties.</p>
+  </header>
+
+  <form class="form glass" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="field">
+      <label for="name">Nom du produit</label>
+      <input id="name" type="text" formControlName="name" placeholder="Ex. Aliment croissance" />
+      @if (fieldError('name'); as message) {
+        <small class="field__error">{{ message }}</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="product_type">Type</label>
+      <select id="product_type" formControlName="product_type">
+        @for (item of types; track item.value) {
+          <option [value]="item.value">{{ item.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="two">
+      <div class="field">
+        <label for="base_unit">Unité de mesure</label>
+        <input id="base_unit" type="text" formControlName="base_unit" list="units" />
+        <datalist id="units">
+          @for (unit of units; track unit) {
+            <option [value]="unit"></option>
+          }
+        </datalist>
+        @if (fieldError('base_unit'); as message) {
+          <small class="field__error">{{ message }}</small>
+        }
+      </div>
+      <div class="field">
+        <label for="low_stock_threshold">Seuil d’alerte</label>
+        <input id="low_stock_threshold" type="number" inputmode="decimal" formControlName="low_stock_threshold" />
+        @if (fieldError('low_stock_threshold'); as message) {
+          <small class="field__error">{{ message }}</small>
+        }
+      </div>
+    </div>
+    <p class="muted">Vous serez alerté quand le stock descend à ce seuil.</p>
+
+    @if (formError(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+
+    <button type="submit" class="btn" [disabled]="saving()">
+      {{ saving() ? 'Création…' : 'Créer le produit' }}
+    </button>
+  </form>
+</div>

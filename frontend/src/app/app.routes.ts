@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard } from './core/auth.guard';
+import { authGuard, permissionGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   {
@@ -37,6 +37,26 @@ export const routes: Routes = [
         title: 'Détail de la bande — AVIKA',
         loadComponent: () =>
           import('./features/cycle-detail/cycle-detail').then((module) => module.CycleDetail),
+      },
+      {
+        path: 'stock',
+        title: 'Stock — AVIKA',
+        canActivate: [permissionGuard('manage_feed')],
+        loadComponent: () => import('./features/stock/stock').then((module) => module.Stock),
+      },
+      {
+        path: 'stock/nouveau',
+        title: 'Nouveau produit — AVIKA',
+        canActivate: [permissionGuard('manage_feed')],
+        loadComponent: () =>
+          import('./features/stock-form/stock-form').then((module) => module.StockForm),
+      },
+      {
+        path: 'stock/:id',
+        title: 'Produit — AVIKA',
+        canActivate: [permissionGuard('manage_feed')],
+        loadComponent: () =>
+          import('./features/stock-detail/stock-detail').then((module) => module.StockDetail),
       },
     ],
   },

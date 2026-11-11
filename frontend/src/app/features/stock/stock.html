@@ -1,0 +1,71 @@
+<div class="page">
+  <header class="page__head">
+    <div>
+      <p class="eyebrow">Approvisionnement</p>
+      <h1>Stock</h1>
+    </div>
+    <a class="btn" routerLink="/stock/nouveau">Nouveau produit</a>
+  </header>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !error()) {
+    <div class="grid" aria-busy="true">
+      @for (i of [1, 2]; track i) {
+        <div class="item glass skeleton"></div>
+      }
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    <section class="kpis" aria-label="Résumé du stock">
+      <article class="kpi glass">
+        <span class="kpi__label">Valeur du stock</span>
+        <strong class="kpi__value">{{ compact(totalValue()) }} <small>GNF</small></strong>
+        <span class="muted">{{ money(totalValue()) }}</span>
+      </article>
+      <article class="kpi glass">
+        <span class="kpi__label">Produits sous le seuil</span>
+        <strong class="kpi__value" [class.is-alert]="lowCount() > 0">{{ lowCount() }}</strong>
+        <span class="muted">{{ lowCount() > 0 ? 'À réapprovisionner' : 'Tout est suffisant' }}</span>
+      </article>
+    </section>
+
+    @if (groups().length === 0) {
+      <p class="empty glass">Aucun produit pour le moment. Ajoutez votre premier produit.</p>
+    }
+
+    @for (group of groups(); track group.type) {
+      <section class="group">
+        <h2>{{ group.label }}</h2>
+        <div class="grid">
+          @for (p of group.items; track p.id) {
+            <a class="item glass" [routerLink]="['/stock', p.id]">
+              <div class="item__top">
+                <strong>{{ p.name }}</strong>
+                @if (p.is_low) {
+                  <span class="pill pill--danger">Stock bas</span>
+                }
+              </div>
+              <div class="item__qty">
+                <strong>{{ qty(p.stock) }}</strong>
+                <span class="muted">{{ p.base_unit }}</span>
+              </div>
+              <div class="meter" role="img" [attr.aria-label]="level(p) + ' % du niveau cible'">
+                <div class="meter__fill" [class.meter__fill--low]="p.is_low" [style.width.%]="level(p)"></div>
+              </div>
+              <p class="muted">
+                Seuil d’alerte : {{ qty(p.low_stock_threshold) }} {{ p.base_unit }} · valeur {{ money(p.stock_value) }}
+              </p>
+            </a>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

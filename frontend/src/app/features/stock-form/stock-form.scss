@@ -1,0 +1,76 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 40rem;
+  margin: 0 auto;
+
+  h1 {
+    font-size: clamp(1.7rem, 5vw, 2.3rem);
+  }
+}
+
+.back {
+  justify-self: start;
+  padding: 0.4rem 0;
+  font-weight: 650;
+  color: var(--leaf-strong);
+  text-decoration: none;
+}
+
+.muted {
+  color: var(--ink-soft);
+  font-size: 0.925rem;
+}
+
+.form {
+  display: grid;
+  gap: 1.1rem;
+  padding: clamp(1.1rem, 4vw, 1.75rem);
+}
+
+.two {
+  display: grid;
+  gap: 1rem;
+}
+
+.field select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 1rem;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--glass-strong);
+}
+
+.field select:focus-visible {
+  outline: none;
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 22%, transparent);
+}
+
+.field__error {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.form-error {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.925rem;
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+@media (min-width: 600px) {
+  .two {
+    grid-template-columns: 1fr 1fr;
+  }
+}

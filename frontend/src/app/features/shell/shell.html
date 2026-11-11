@@ -17,7 +17,7 @@
     </div>
 
     <nav class="nav glass" aria-label="Navigation principale">
-      @for (item of nav; track item.label) {
+      @for (item of visibleNav(); track item.label) {
         @if (item.path; as path) {
           <a
             class="nav__item"

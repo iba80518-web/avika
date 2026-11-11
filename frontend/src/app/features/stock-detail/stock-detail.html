@@ -1,0 +1,121 @@
+<div class="page">
+  <a class="back" routerLink="/stock">← Stock</a>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !product() && !error()) {
+    <div class="skeleton glass" aria-busy="true"></div>
+  }
+
+  @if (product(); as p) {
+    <header class="head">
+      <h1>{{ p.name }}</h1>
+      @if (p.is_low) {
+        <span class="pill pill--danger">Stock bas</span>
+      }
+    </header>
+
+    <section class="kpis" aria-label="Niveau du stock">
+      <article class="kpi glass">
+        <span class="kpi__label">En stock</span>
+        <strong class="kpi__value">{{ qty(p.stock) }} <small>{{ p.base_unit }}</small></strong>
+        <span class="muted">Seuil d’alerte : {{ qty(p.low_stock_threshold) }} {{ p.base_unit }}</span>
+      </article>
+      <article class="kpi glass">
+        <span class="kpi__label">Valeur du stock</span>
+        <strong class="kpi__value">{{ money(p.stock_value) }}</strong>
+        <span class="muted">au coût d’achat</span>
+      </article>
+    </section>
+
+    <section class="card glass">
+      <h2>Enregistrer un mouvement</h2>
+      <form class="entry" (submit)="onSubmit($event)" novalidate>
+        <div class="seg" role="group" aria-label="Type de mouvement">
+          @for (item of kinds; track item.value) {
+            <button
+              type="button"
+              [class.is-on]="kind() === item.value"
+              [attr.aria-pressed]="kind() === item.value"
+              (click)="pickKind(item.value)"
+            >
+              {{ item.label }}
+            </button>
+          }
+        </div>
+
+        <div class="field">
+          <label for="qty">Quantité ({{ p.base_unit }})</label>
+          <input id="qty" type="text" inputmode="decimal" placeholder="0" [value]="quantity()" (input)="onQuantity($event)" />
+        </div>
+
+        @if (kind() === 'entry') {
+          <div class="field">
+            <label for="cost">Coût total de l’achat (GNF)</label>
+            <input id="cost" type="text" inputmode="numeric" placeholder="0 si gratuit" [value]="cost()" (input)="onCost($event)" />
+          </div>
+        }
+
+        @if (kind() === 'exit' && activeCycles().length > 0) {
+          <div class="field">
+            <label for="cycle">Consommé par la bande (facultatif)</label>
+            <select id="cycle" (change)="onCycle($event)">
+              <option value="">Aucune bande</option>
+              @for (cycle of activeCycles(); track cycle.id) {
+                <option [value]="cycle.id">{{ cycle.name }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <div class="field">
+          <label for="date">Date</label>
+          <input id="date" type="date" [value]="date()" [max]="today" (input)="onDate($event)" />
+        </div>
+
+        <div class="field">
+          <label for="note">Note (facultatif)</label>
+          <input id="note" type="text" [value]="note()" (input)="onNote($event)" />
+        </div>
+
+        @if (formError(); as message) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+        @if (notice(); as message) {
+          <p class="form-ok" role="status">{{ message }}</p>
+        }
+
+        <button type="submit" class="btn" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+      </form>
+    </section>
+
+    <section class="card glass">
+      <h2>Historique</h2>
+      @if (movements().length === 0) {
+        <p class="muted">Aucun mouvement pour le moment.</p>
+      }
+      <ul class="events">
+        @for (m of movements(); track m.id) {
+          <li>
+            <div>
+              <strong>{{ movementLabel(m) }}</strong>
+              <span class="muted">
+                {{ shortDate(m.movement_date) }}
+                @if (cycleName(m); as name) { · {{ name }} }
+                @if (m.total_cost > 0) { · {{ money(m.total_cost) }} }
+              </span>
+            </div>
+            <strong class="events__qty">{{ signed(m) }} {{ p.base_unit }}</strong>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>
