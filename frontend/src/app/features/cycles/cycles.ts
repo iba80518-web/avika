@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import { AuthService } from '../../core/auth.service';
 import { dayNumber } from '../../core/dates';
 import { Cycle, CycleStatus } from '../../core/farming.models';
 import { FarmingService } from '../../core/farming.service';
@@ -30,6 +31,7 @@ const STATUS_TONES: Record<CycleStatus, 'ok' | 'warn' | 'done' | 'danger'> = {
 })
 export class Cycles {
   private readonly service = inject(FarmingService);
+  private readonly auth = inject(AuthService);
 
   protected readonly cycles = signal<Cycle[]>([]);
   protected readonly total = signal(0);
@@ -40,6 +42,7 @@ export class Cycles {
 
   protected readonly number = formatNumber;
   protected readonly day = dayNumber;
+  protected readonly canCreate = computed(() => this.auth.can('manage_cycles'));
 
   protected readonly visible = computed(() =>
     this.filter() === 'active'

@@ -7,7 +7,10 @@ import {
   Coop,
   Cycle,
   CycleSummary,
+  Farm,
   FlockEvent,
+  NewCoop,
+  NewCycle,
   NewMortality,
   Page,
 } from './farming.models';
@@ -34,6 +37,36 @@ export class FarmingService {
 
   coops(): Observable<Page<Coop>> {
     return this.http.get<Page<Coop>>(`${API_BASE}/coops/`);
+  }
+
+  farms(): Observable<Page<Farm>> {
+    return this.http.get<Page<Farm>>(`${API_BASE}/farms/`);
+  }
+
+  createFarm(body: { name: string }): Observable<Farm> {
+    return this.http.post<Farm>(`${API_BASE}/farms/`, body);
+  }
+
+  createCoop(body: NewCoop): Observable<Coop> {
+    return this.http.post<Coop>(`${API_BASE}/coops/`, body);
+  }
+
+  createCycle(body: NewCycle): Observable<Cycle> {
+    return this.http.post<Cycle>(`${API_BASE}/cycles/`, body);
+  }
+
+  // Le serveur n'accepte de dépasser la capacité du poulailler que si on le confirme explicitement.
+  startCycle(id: number, confirmOverCapacity: boolean): Observable<Cycle> {
+    const body = confirmOverCapacity ? { confirm_over_capacity: true } : {};
+    return this.http.post<Cycle>(`${API_BASE}/cycles/${id}/start/`, body);
+  }
+
+  completeCycle(id: number): Observable<Cycle> {
+    return this.http.post<Cycle>(`${API_BASE}/cycles/${id}/complete/`, {});
+  }
+
+  cancelCycle(id: number): Observable<Cycle> {
+    return this.http.post<Cycle>(`${API_BASE}/cycles/${id}/cancel/`, {});
   }
 
   // Le uuid rend l'envoi sûr : le renvoyer ne crée jamais de doublon (201 la première fois, 200 ensuite).

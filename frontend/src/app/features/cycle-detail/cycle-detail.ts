@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import { firstMessage } from '../../core/api-errors';
 import { AuthService } from '../../core/auth.service';
 import { dayNumber, localToday, shortDate } from '../../core/dates';
 import { Cycle, CycleSummary, EventType, FlockEvent } from '../../core/farming.models';
@@ -91,7 +92,9 @@ export class CycleDetail {
         this.cycle.set(cycle);
         this.summary.set(summary);
         this.events.set(events.results);
-        this.coopName.set(coops.results.find((coop) => coop.id === cycle.coop)?.name ?? '');
+        const coop = coops.results.find((item) => item.id === cycle.coop);
+        this.coopName.set(coop?.name ?? '');
+        this.coopCapacity.set(coop?.capacity ?? 0);
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -175,6 +178,55 @@ export class CycleDetail {
         this.events.set(events.results);
         const cycle = this.cycle();
         if (cycle) this.cycle.set({ ...cycle, current_count: summary.current_count });
+      },
+    });
+  }
+
+  // ---------- Démarrer, terminer, annuler ----------
+  protected readonly coopCapacity = signal(0);
+  protected readonly pending = signal<'start' | 'complete' | 'cancel' | null>(null);
+  protected readonly acting = signal(false);
+  protected readonly actionError = signal<string | null>(null);
+
+  protected readonly canManage = computed(() => this.auth.can('manage_cycles'));
+  protected readonly overCapacity = computed(() => {
+    const cycle = this.cycle();
+    const capacity = this.coopCapacity();
+    return !!cycle && capacity > 0 && cycle.initial_count > capacity;
+  });
+
+  protected ask(action: 'start' | 'complete' | 'cancel'): void {
+    this.actionError.set(null);
+    this.pending.set(action);
+  }
+
+  protected dismiss(): void {
+    this.pending.set(null);
+    this.actionError.set(null);
+  }
+
+  protected confirm(): void {
+    const action = this.pending();
+    const cycle = this.cycle();
+    if (!action || !cycle || this.acting()) return;
+    this.acting.set(true);
+    this.actionError.set(null);
+    const call =
+      action === 'start'
+        ? this.service.startCycle(cycle.id, this.overCapacity())
+        : action === 'complete'
+          ? this.service.completeCycle(cycle.id)
+          : this.service.cancelCycle(cycle.id);
+    call.subscribe({
+      next: (updated) => {
+        this.cycle.set(updated);
+        this.pending.set(null);
+        this.acting.set(false);
+        this.refresh();
+      },
+      error: (error: unknown) => {
+        this.actionError.set(firstMessage(error));
+        this.acting.set(false);
       },
     });
   }

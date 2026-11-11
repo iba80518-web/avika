@@ -75,3 +75,30 @@ export interface NewMortality {
   cause: string;
   uuid: string;
 }
+
+export type CycleType = 'broiler' | 'layer' | 'other';
+
+export interface Farm {
+  id: number;
+  name: string;
+  location: string;
+}
+
+export interface NewCycle {
+  coop: number;
+  name: string;
+  type: CycleType;
+  start_date: string;
+  initial_count: number;
+  unit_price: number;
+  supplier_name: string;
+  target: string;
+  planned_sale_date: string | null;
+}
+
+export interface NewCoop {
+  farm: number;
+  name: string;
+  capacity: number;
+  type: CycleType;
+}

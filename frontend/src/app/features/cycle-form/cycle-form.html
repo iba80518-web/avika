@@ -1,0 +1,151 @@
+<div class="page">
+  <a class="back" routerLink="/bandes">← Bandes</a>
+
+  <header>
+    <h1>Nouvelle bande</h1>
+    <p class="muted">Renseignez le lot de poussins reçu. Vous pourrez le démarrer ensuite.</p>
+  </header>
+
+  @if (loadError(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !loadError()) {
+    <div class="skeleton glass" aria-busy="true"></div>
+  }
+
+  @if (!loading() && !loadError()) {
+    <form class="form glass" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <fieldset class="group">
+        <legend>Poulailler</legend>
+
+        @if (coops().length > 0) {
+          <div class="field">
+            <label for="coop">Où les poulets sont-ils élevés ?</label>
+            <select id="coop" formControlName="coop">
+              <option [ngValue]="null" disabled>Choisir un poulailler</option>
+              @for (coop of coops(); track coop.id) {
+                <option [ngValue]="coop.id">{{ coop.name }} (capacité {{ number(coop.capacity) }})</option>
+              }
+            </select>
+            @if (fieldError('coop'); as message) {
+              <small class="field__error">{{ message }}</small>
+            }
+          </div>
+        } @else if (!creatingCoop()) {
+          <p class="muted">Aucun poulailler pour le moment.</p>
+        }
+
+        @if (canCreateCoop() && !creatingCoop()) {
+          <button type="button" class="link" (click)="creatingCoop.set(true)">+ Nouveau poulailler</button>
+        }
+
+        @if (creatingCoop()) {
+          <div class="inline" [formGroup]="coopForm" (keydown.enter)="createCoopOnEnter($event)">
+            <div class="field">
+              <label for="coop-name">Nom du poulailler</label>
+              <input id="coop-name" type="text" formControlName="name" />
+            </div>
+            <div class="field">
+              <label for="coop-capacity">Capacité (nombre de poulets)</label>
+              <input id="coop-capacity" type="number" inputmode="numeric" formControlName="capacity" />
+            </div>
+            @if (coopError(); as message) {
+              <p class="form-error" role="alert">{{ message }}</p>
+            }
+            <div class="row">
+              <button type="button" class="btn" (click)="createCoop()" [disabled]="coopSaving()">
+                {{ coopSaving() ? 'Création…' : 'Créer le poulailler' }}
+              </button>
+              <button type="button" class="btn btn--ghost" (click)="creatingCoop.set(false)">Annuler</button>
+            </div>
+          </div>
+        }
+
+        @if (coops().length === 0 && !canCreateCoop()) {
+          <p class="muted">Demandez à un responsable de créer un poulailler.</p>
+        }
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>La bande</legend>
+
+        <div class="field">
+          <label for="name">Nom de la bande</label>
+          <input id="name" type="text" formControlName="name" placeholder="Ex. Bande novembre" />
+          @if (fieldError('name'); as message) {
+            <small class="field__error">{{ message }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="type">Type d’élevage</label>
+          <select id="type" formControlName="type">
+            @for (item of types; track item.value) {
+              <option [value]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label for="start_date">Date de mise en place</label>
+            <input id="start_date" type="date" formControlName="start_date" />
+            @if (fieldError('start_date'); as message) {
+              <small class="field__error">{{ message }}</small>
+            }
+          </div>
+          <div class="field">
+            <label for="planned_sale_date">Vente prévue (facultatif)</label>
+            <input id="planned_sale_date" type="date" formControlName="planned_sale_date" />
+            @if (fieldError('planned_sale_date'); as message) {
+              <small class="field__error">{{ message }}</small>
+            }
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>Achat des poussins</legend>
+
+        <div class="two">
+          <div class="field">
+            <label for="initial_count">Nombre de poussins</label>
+            <input id="initial_count" type="number" inputmode="numeric" formControlName="initial_count" />
+            @if (fieldError('initial_count'); as message) {
+              <small class="field__error">{{ message }}</small>
+            }
+          </div>
+          <div class="field">
+            <label for="unit_price">Prix d’un poussin (GNF)</label>
+            <input id="unit_price" type="number" inputmode="numeric" formControlName="unit_price" />
+            @if (fieldError('unit_price'); as message) {
+              <small class="field__error">{{ message }}</small>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="supplier_name">Fournisseur (facultatif)</label>
+          <input id="supplier_name" type="text" formControlName="supplier_name" />
+        </div>
+
+        <div class="field">
+          <label for="target">Objectif (facultatif)</label>
+          <input id="target" type="text" formControlName="target" placeholder="Ex. 2 kg par poulet en 35 jours" />
+        </div>
+      </fieldset>
+
+      @if (formError(); as message) {
+        <p class="form-error" role="alert">{{ message }}</p>
+      }
+
+      <button type="submit" class="btn" [disabled]="saving()">
+        {{ saving() ? 'Création…' : 'Créer la bande' }}
+      </button>
+    </form>
+  }
+</div>

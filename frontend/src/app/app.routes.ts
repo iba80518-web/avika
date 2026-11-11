@@ -27,6 +27,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/cycles/cycles').then((module) => module.Cycles),
       },
       {
+        path: 'bandes/nouvelle',
+        title: 'Nouvelle bande — AVIKA',
+        loadComponent: () =>
+          import('./features/cycle-form/cycle-form').then((module) => module.CycleForm),
+      },
+      {
         path: 'bandes/:id',
         title: 'Détail de la bande — AVIKA',
         loadComponent: () =>

@@ -12,6 +12,9 @@
         Toutes
       </button>
     </div>
+    @if (canCreate()) {
+      <a class="btn" routerLink="/bandes/nouvelle">Nouvelle bande</a>
+    }
   </header>
 
   @if (error(); as message) {

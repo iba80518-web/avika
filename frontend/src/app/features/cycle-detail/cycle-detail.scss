@@ -195,6 +195,25 @@
   background: color-mix(in srgb, var(--leaf) 14%, transparent);
 }
 
+/* ---------- Actions sur la bande ---------- */
+.actions {
+  padding: 1.1rem 1.25rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.actions__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.confirm {
+  display: grid;
+  gap: 0.9rem;
+  font-weight: 600;
+}
+
 /* ---------- Historique ---------- */
 .events {
   list-style: none;

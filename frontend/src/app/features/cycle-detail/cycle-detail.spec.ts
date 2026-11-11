@@ -100,4 +100,38 @@ describe('CycleDetail', () => {
     expect(second.request.body.uuid).toBe(uuid);
     second.error(new ProgressEvent('error'));
   });
+
+  function click(label: string): void {
+    const button = Array.from(root.querySelectorAll<HTMLButtonElement>('.actions button')).find((item) =>
+      item.textContent?.includes(label),
+    );
+    (button as HTMLButtonElement).click();
+    fixture.detectChanges();
+  }
+
+  it('termine la bande après confirmation', async () => {
+    click('Terminer la bande');
+    click('Confirmer');
+    const request = http.expectOne('/api/v1/cycles/2/complete/');
+    expect(request.request.method).toBe('POST');
+    request.flush({ ...CYCLE, status: 'completed' });
+    http.expectOne('/api/v1/cycles/2/summary/').flush(SUMMARY);
+    http.expectOne('/api/v1/cycles/2/events/').flush(page([EVENT]));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Terminée');
+    expect(root.querySelector('.actions')).toBeNull();
+  });
+
+  it('affiche le refus du serveur sans changer la bande', async () => {
+    click('Annuler la bande');
+    click('Confirmer');
+    http
+      .expectOne('/api/v1/cycles/2/cancel/')
+      .flush({ detail: 'Action impossible.' }, { status: 400, statusText: 'Bad Request' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Action impossible.');
+    expect(root.textContent).toContain('En cours');
+  });
 });

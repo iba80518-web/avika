@@ -21,6 +21,52 @@
       <span class="pill">{{ statusLabel() }}</span>
     </header>
 
+    @if (canManage() && (c.status === 'planned' || c.status === 'active')) {
+      <section class="actions glass">
+        @if (pending(); as action) {
+          <div class="confirm" role="alertdialog" aria-live="polite">
+            <p>
+              @switch (action) {
+                @case ('start') {
+                  @if (overCapacity()) {
+                    L’effectif ({{ number(c.initial_count) }}) dépasse la capacité du poulailler
+                    ({{ number(coopCapacity()) }}). Démarrer quand même « {{ c.name }} » ?
+                  } @else {
+                    Démarrer la bande « {{ c.name }} » avec {{ number(c.initial_count) }} poulets ?
+                  }
+                }
+                @case ('complete') {
+                  Terminer la bande « {{ c.name }} » ? Vérifiez d’abord que toutes les ventes sont enregistrées.
+                }
+                @case ('cancel') {
+                  Annuler la bande « {{ c.name }} » ? Elle ne comptera plus parmi vos bandes en cours.
+                }
+              }
+            </p>
+            @if (actionError(); as message) {
+              <p class="form-error" role="alert">{{ message }}</p>
+            }
+            <div class="actions__row">
+              <button type="button" class="btn" (click)="confirm()" [disabled]="acting()">
+                {{ acting() ? 'Un instant…' : 'Confirmer' }}
+              </button>
+              <button type="button" class="btn btn--ghost" (click)="dismiss()" [disabled]="acting()">Retour</button>
+            </div>
+          </div>
+        } @else {
+          <div class="actions__row">
+            @if (c.status === 'planned') {
+              <button type="button" class="btn" (click)="ask('start')">Démarrer la bande</button>
+            }
+            @if (c.status === 'active') {
+              <button type="button" class="btn" (click)="ask('complete')">Terminer la bande</button>
+            }
+            <button type="button" class="btn btn--ghost" (click)="ask('cancel')">Annuler la bande</button>
+          </div>
+        }
+      </section>
+    }
+
     @if (summary(); as s) {
       <section class="kpis" aria-label="Chiffres de la bande">
         <article class="kpi glass">
