@@ -43,7 +43,12 @@ export class Shell {
       path: '/stock',
       permission: 'manage_feed',
     },
-    { label: 'Ventes', icon: 'M5 19V9M11 19V5M17 19v-7', path: null },
+    {
+      label: 'Ventes',
+      icon: 'M5 19V9M11 19V5M17 19v-7',
+      path: '/ventes',
+      permission: 'manage_sales',
+    },
     { label: 'Santé', icon: 'M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z', path: null },
   ];
 

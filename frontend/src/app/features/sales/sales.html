@@ -1,0 +1,88 @@
+<div class="page">
+  <header class="page__head">
+    <div>
+      <p class="eyebrow">Revenus</p>
+      <h1>Ventes</h1>
+    </div>
+    <a class="btn" routerLink="/ventes/nouvelle">Nouvelle vente</a>
+  </header>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !error()) {
+    <div class="list" aria-busy="true">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="row glass skeleton"></div>
+      }
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    <section class="kpis" aria-label="Résumé des ventes">
+      <article class="kpi glass">
+        <span class="kpi__label">Total vendu</span>
+        <strong class="kpi__value">{{ compact(totalSold()) }} <small>GNF</small></strong>
+      </article>
+      <article class="kpi glass">
+        <span class="kpi__label">Encaissé</span>
+        <strong class="kpi__value">{{ compact(totalPaid()) }} <small>GNF</small></strong>
+      </article>
+      <article class="kpi glass kpi--due">
+        <span class="kpi__label">Argent à recevoir</span>
+        <strong class="kpi__value" [class.is-alert]="totalDue() > 0">{{ compact(totalDue()) }} <small>GNF</small></strong>
+      </article>
+    </section>
+
+    @if (hasMore()) {
+      <p class="notice glass">Seules les ventes les plus récentes sont affichées : « Total vendu » et « Encaissé » portent sur elles.</p>
+    }
+
+    @if (receivables().length > 0) {
+      <section class="card glass">
+        <h2>Qui doit encore de l’argent</h2>
+        <ul class="due">
+          @for (row of receivables(); track row.customer) {
+            <li>
+              <div>
+                <strong>{{ row.customer_name }}</strong>
+                <span class="muted">{{ row.sales_count }} vente{{ row.sales_count > 1 ? 's' : '' }} à solder</span>
+              </div>
+              <strong class="due__amount">{{ money(row.total_due) }}</strong>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="list" aria-label="Liste des ventes">
+      @if (sales().length === 0) {
+        <p class="empty glass">Aucune vente pour le moment. Enregistrez votre première vente.</p>
+      }
+      @for (s of sales(); track s.id) {
+        <a class="row glass" [routerLink]="['/ventes', s.id]" [class.is-cancelled]="s.status === 'cancelled'">
+          <div class="row__main">
+            <strong>{{ s.customer_name ?? 'Client de passage' }}</strong>
+            <span class="muted">
+              {{ shortDate(s.sale_date) }} · {{ cycleName(s.cycle) }} · {{ s.quantity }} poulet{{ s.quantity > 1 ? 's' : '' }}
+            </span>
+          </div>
+          <div class="row__side">
+            <strong>{{ money(s.total_amount) }}</strong>
+            @if (s.status === 'cancelled') {
+              <span class="pill pill--grey">Annulée</span>
+            } @else if (s.balance === 0) {
+              <span class="pill pill--ok">Payée</span>
+            } @else {
+              <span class="pill pill--warn">Reste {{ money(s.balance) }}</span>
+            }
+          </div>
+        </a>
+      }
+    </section>
+  }
+</div>

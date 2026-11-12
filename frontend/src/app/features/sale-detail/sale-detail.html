@@ -1,0 +1,137 @@
+<div class="page">
+  <a class="back" routerLink="/ventes">← Ventes</a>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !sale() && !error()) {
+    <div class="skeleton glass" aria-busy="true"></div>
+  }
+
+  @if (sale(); as s) {
+    <header class="head">
+      <div>
+        <h1>{{ s.customer_name ?? 'Client de passage' }}</h1>
+        <p class="muted">
+          {{ shortDate(s.sale_date) }} ·
+          @if (cycle(); as c) {
+            <a [routerLink]="['/bandes', c.id]">{{ c.name }}</a>
+          }
+        </p>
+      </div>
+      @if (s.status === 'cancelled') {
+        <span class="pill pill--grey">Annulée</span>
+      } @else if (s.balance === 0) {
+        <span class="pill pill--ok">Payée</span>
+      } @else {
+        <span class="pill pill--warn">À solder</span>
+      }
+    </header>
+
+    @if (notice(); as message) {
+      <p class="form-ok" role="status">{{ message }}</p>
+    }
+
+    <section class="kpis" aria-label="Montants">
+      <article class="kpi glass">
+        <span class="kpi__label">Total</span>
+        <strong class="kpi__value">{{ money(s.total_amount) }}</strong>
+        <span class="muted">
+          {{ s.quantity }} poulet{{ s.quantity > 1 ? 's' : '' }} × {{ money(s.unit_price) }}{{ s.sale_type === 'weight' ? ' / kg · ' + s.weight_kg + ' kg' : '' }}
+        </span>
+      </article>
+      <article class="kpi glass">
+        <span class="kpi__label">Payé</span>
+        <strong class="kpi__value">{{ money(s.paid) }}</strong>
+      </article>
+      <article class="kpi glass">
+        <span class="kpi__label">Reste à payer</span>
+        <strong class="kpi__value" [class.is-alert]="s.balance > 0 && s.status === 'active'">{{ money(s.balance) }}</strong>
+      </article>
+    </section>
+
+    @if (s.note) {
+      <p class="muted">Note : {{ s.note }}</p>
+    }
+
+    @if (canPay()) {
+      <section class="card glass">
+        <h2>Encaisser un paiement</h2>
+        <form class="entry" (submit)="onSubmit($event)" novalidate>
+          <div class="field">
+            <label for="amount">Montant reçu (GNF)</label>
+            <input id="amount" type="text" inputmode="numeric" placeholder="0" [value]="amount()" (input)="amount.set(value($event))" />
+            <button type="button" class="link" (click)="settle()">Solder : {{ money(s.balance) }}</button>
+          </div>
+          <div class="field">
+            <label for="method">Mode de paiement</label>
+            <select id="method" (change)="method.set($any($event.target).value)">
+              @for (item of methods; track item.value) {
+                <option [value]="item.value">{{ item.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="payDate">Date</label>
+            <input id="payDate" type="date" [value]="payDate()" [max]="today" (input)="payDate.set(value($event))" />
+          </div>
+          @if (formError(); as message) {
+            <p class="form-error" role="alert">{{ message }}</p>
+          }
+          <button type="submit" class="btn" [disabled]="saving()">
+            {{ saving() ? 'Enregistrement…' : 'Enregistrer le paiement' }}
+          </button>
+        </form>
+      </section>
+    }
+
+    <section class="card glass">
+      <h2>Paiements reçus</h2>
+      @if (payments().length === 0) {
+        <p class="muted">Aucun paiement enregistré pour cette vente.</p>
+      }
+      <ul class="events">
+        @for (p of payments(); track p.id) {
+          <li>
+            <div>
+              <strong>{{ money(p.amount) }}</strong>
+              <span class="muted">{{ shortDate(p.payment_date) }} · {{ methodLabel(p.method) }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+
+    @if (canCancel()) {
+      <section class="card glass">
+        <h2>Annuler cette vente</h2>
+        @if (!confirming()) {
+          <p class="muted">En cas d’erreur de saisie : annulez, puis ressaisissez la vente. Les poulets reviendront dans l’effectif.</p>
+          <button type="button" class="btn btn--ghost" (click)="askCancel()">Annuler la vente</button>
+        } @else {
+          <div class="field">
+            <label for="reason">Raison (facultatif)</label>
+            <input id="reason" type="text" [value]="reason()" (input)="reason.set(value($event))" />
+          </div>
+          @if (cancelError(); as message) {
+            <p class="form-error" role="alert">{{ message }}</p>
+          }
+          <div class="actions">
+            <button type="button" class="btn" [disabled]="cancelling()" (click)="cancel()">
+              {{ cancelling() ? 'Annulation…' : 'Oui, annuler' }}
+            </button>
+            <button type="button" class="btn btn--ghost" (click)="abandonCancel()">Garder la vente</button>
+          </div>
+        }
+      </section>
+    }
+
+    @if (hasPaymentsLock()) {
+      <p class="muted lock">Cette vente a déjà reçu des paiements : elle ne peut plus être annulée.</p>
+    }
+  }
+</div>

@@ -58,6 +58,26 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/stock-detail/stock-detail').then((module) => module.StockDetail),
       },
+      {
+        path: 'ventes',
+        title: 'Ventes — AVIKA',
+        canActivate: [permissionGuard('manage_sales')],
+        loadComponent: () => import('./features/sales/sales').then((module) => module.Sales),
+      },
+      {
+        path: 'ventes/nouvelle',
+        title: 'Nouvelle vente — AVIKA',
+        canActivate: [permissionGuard('manage_sales')],
+        loadComponent: () =>
+          import('./features/sale-form/sale-form').then((module) => module.SaleForm),
+      },
+      {
+        path: 'ventes/:id',
+        title: 'Vente — AVIKA',
+        canActivate: [permissionGuard('manage_sales')],
+        loadComponent: () =>
+          import('./features/sale-detail/sale-detail').then((module) => module.SaleDetail),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
