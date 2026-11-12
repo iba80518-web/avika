@@ -1,0 +1,117 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 40rem;
+  margin: 0 auto;
+
+  h1 {
+    font-size: clamp(1.7rem, 5vw, 2.3rem);
+  }
+}
+
+.back {
+  justify-self: start;
+  padding: 0.4rem 0;
+  font-weight: 650;
+  color: var(--leaf-strong);
+  text-decoration: none;
+}
+
+.muted {
+  color: var(--ink-soft);
+  font-size: 0.925rem;
+}
+
+.form {
+  display: grid;
+  gap: 1.1rem;
+  padding: clamp(1.1rem, 4vw, 1.75rem);
+}
+
+.label {
+  font-weight: 600;
+}
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+
+  button {
+    min-height: 48px;
+    padding: 0 0.75rem;
+    border: 1.5px solid var(--glass-edge);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-weight: 650;
+    color: var(--ink);
+    background: var(--glass);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  button.is-on {
+    color: var(--on-leaf);
+    background: var(--leaf);
+    border-color: var(--leaf);
+  }
+}
+
+.field select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 1rem;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--glass-strong);
+}
+
+.field select:focus-visible {
+  outline: none;
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 22%, transparent);
+}
+
+.form-error {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.925rem;
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.state {
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.skeleton {
+  min-height: 14rem;
+  background: linear-gradient(100deg, var(--glass) 30%, var(--glass-strong) 50%, var(--glass) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (min-width: 600px) {
+  .chips {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

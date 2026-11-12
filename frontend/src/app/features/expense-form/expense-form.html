@@ -1,0 +1,72 @@
+<div class="page">
+  <a class="back" routerLink="/depenses">← Dépenses</a>
+
+  <header>
+    <h1>{{ expenseId === null ? 'Nouvelle dépense' : 'Modifier la dépense' }}</h1>
+    <p class="muted">L’aliment ne se saisit pas ici : il est déjà compté par le stock.</p>
+  </header>
+
+  @if (loadError(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !loadError()) {
+    <div class="skeleton glass" aria-busy="true"></div>
+  }
+
+  @if (!loading() && !loadError()) {
+    <form class="form glass" (submit)="onSubmit($event)" novalidate>
+      <div class="field">
+        <span class="label" id="category-label">Catégorie</span>
+        <div class="chips" role="group" aria-labelledby="category-label">
+          @for (item of categories; track item.value) {
+            <button
+              type="button"
+              [class.is-on]="category() === item.value"
+              [attr.aria-pressed]="category() === item.value"
+              (click)="category.set(item.value)"
+            >
+              {{ item.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="amount">Montant (GNF)</label>
+        <input id="amount" type="text" inputmode="numeric" placeholder="0" [value]="amount()" (input)="amount.set(value($event))" />
+      </div>
+
+      <div class="field">
+        <label for="cycle">Bande concernée (facultatif)</label>
+        <select id="cycle" (change)="cycleId.set(value($event))">
+          <option value="">Dépense générale (aucune bande)</option>
+          @for (cycle of choosableCycles(); track cycle.id) {
+            <option [value]="cycle.id" [selected]="cycleId() === '' + cycle.id">{{ cycle.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="date">Date</label>
+        <input id="date" type="date" [value]="date()" [max]="today" (input)="date.set(value($event))" />
+      </div>
+
+      <div class="field">
+        <label for="description">Description (facultatif)</label>
+        <input id="description" type="text" placeholder="Ex. Salaire du gardien" [value]="description()" (input)="description.set(value($event))" />
+      </div>
+
+      @if (formError(); as message) {
+        <p class="form-error" role="alert">{{ message }}</p>
+      }
+
+      <button type="submit" class="btn" [disabled]="saving()">
+        {{ saving() ? 'Enregistrement…' : expenseId === null ? 'Enregistrer la dépense' : 'Enregistrer les changements' }}
+      </button>
+    </form>
+  }
+</div>

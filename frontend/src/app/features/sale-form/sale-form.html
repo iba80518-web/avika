@@ -79,9 +79,43 @@
           <select id="customer" (change)="customerId.set(value($event))">
             <option value="">Client de passage</option>
             @for (customer of activeCustomers(); track customer.id) {
-              <option [value]="customer.id">{{ customer.name }}</option>
+              <option [value]="customer.id" [selected]="customerId() === '' + customer.id">{{ customer.name }}</option>
             }
           </select>
+        </div>
+
+        <div class="newcustomer">
+          @if (!newCustomerOpen()) {
+            <button type="button" class="link" (click)="newCustomerOpen.set(true)">+ Nouveau client</button>
+          } @else {
+            <div class="newcustomer__box">
+              <div class="field">
+                <label for="newName">Nom du client</label>
+                <input id="newName" type="text" [value]="newName()" (input)="newName.set(value($event))" />
+              </div>
+              <div class="field">
+                <label for="newPhone">Téléphone (facultatif)</label>
+                <input id="newPhone" type="tel" inputmode="tel" [value]="newPhone()" (input)="newPhone.set(value($event))" />
+              </div>
+              <div class="field">
+                <label for="newType">Type de client</label>
+                <select id="newType" (change)="newType.set(value($event))">
+                  @for (item of customerTypes; track item.value) {
+                    <option [value]="item.value">{{ item.label }}</option>
+                  }
+                </select>
+              </div>
+              @if (customerError(); as message) {
+                <p class="form-error" role="alert">{{ message }}</p>
+              }
+              <div class="actions">
+                <button type="button" class="btn" [disabled]="creatingCustomer()" (click)="createCustomer()">
+                  {{ creatingCustomer() ? 'Création…' : 'Créer le client' }}
+                </button>
+                <button type="button" class="btn btn--ghost" (click)="newCustomerOpen.set(false)">Fermer</button>
+              </div>
+            </div>
+          }
         </div>
 
         <div class="field">

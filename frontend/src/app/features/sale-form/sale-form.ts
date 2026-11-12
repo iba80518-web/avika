@@ -2,11 +2,12 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 
-import { firstMessage } from '../../core/api-errors';
+import { fieldErrors, firstMessage } from '../../core/api-errors';
 import { localToday } from '../../core/dates';
 import { Cycle, Page } from '../../core/farming.models';
 import { FarmingService } from '../../core/farming.service';
 import { Customer, NewSale, PaymentMethod, SaleType } from '../../core/finance.models';
+import { CUSTOMER_TYPES, CustomerService } from '../../core/customer.service';
 import { FinanceService } from '../../core/finance.service';
 import { formatMoney } from '../../core/money';
 import { parseNumber } from '../../core/numbers';
@@ -24,6 +25,7 @@ export class SaleForm {
   private readonly finance = inject(FinanceService);
   private readonly farming = inject(FarmingService);
   private readonly router = inject(Router);
+  private readonly customerService = inject(CustomerService);
 
   protected readonly types: { value: SaleType; label: string }[] = [
     { value: 'count', label: 'Au nombre' },
@@ -55,6 +57,14 @@ export class SaleForm {
   protected readonly note = signal('');
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
+
+  protected readonly customerTypes = CUSTOMER_TYPES;
+  protected readonly newCustomerOpen = signal(false);
+  protected readonly newName = signal('');
+  protected readonly newPhone = signal('');
+  protected readonly newType = signal('individual');
+  protected readonly creatingCustomer = signal(false);
+  protected readonly customerError = signal<string | null>(null);
 
   // Gardé tant que l'envoi n'a pas réussi : un nouvel essai ne peut pas créer une seconde vente.
   private pendingUuid = newUuid();
@@ -109,6 +119,36 @@ export class SaleForm {
 
   protected value(event: Event): string {
     return (event.target as HTMLInputElement).value;
+  }
+
+  protected createCustomer(): void {
+    const name = this.newName().trim();
+    if (name === '') {
+      this.customerError.set('Indiquez le nom du client.');
+      return;
+    }
+    if (this.creatingCustomer()) return;
+    this.creatingCustomer.set(true);
+    this.customerError.set(null);
+    this.customerService
+      .create({ name, phone: this.newPhone().trim(), customer_type: this.newType() })
+      .subscribe({
+        next: (customer) => {
+          this.customers.update((list) => [...list, customer]);
+          this.customerId.set(String(customer.id));
+          this.newName.set('');
+          this.newPhone.set('');
+          this.newType.set('individual');
+          this.newCustomerOpen.set(false);
+          this.creatingCustomer.set(false);
+        },
+        error: (error: unknown) => {
+          this.customerError.set(
+            fieldErrors(error)['name'] ?? firstMessage(error, 'Impossible de créer ce client. Réessayez.'),
+          );
+          this.creatingCustomer.set(false);
+        },
+      });
   }
 
   protected pickType(type: SaleType): void {

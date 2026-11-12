@@ -49,6 +49,12 @@ export class Shell {
       path: '/ventes',
       permission: 'manage_sales',
     },
+    {
+      label: 'Dépenses',
+      icon: 'M12 3v18M16 7.5c0-1.9-1.8-3-4-3s-4 1.1-4 3 1.8 2.8 4 3.2 4 1.3 4 3.3-1.8 3-4 3-4-1.1-4-3',
+      path: '/depenses',
+      permission: 'manage_expenses',
+    },
     { label: 'Santé', icon: 'M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z', path: null },
   ];
 

@@ -78,6 +78,27 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/sale-detail/sale-detail').then((module) => module.SaleDetail),
       },
+      {
+        path: 'depenses',
+        title: 'Dépenses — AVIKA',
+        canActivate: [permissionGuard('manage_expenses')],
+        loadComponent: () =>
+          import('./features/expenses/expenses').then((module) => module.Expenses),
+      },
+      {
+        path: 'depenses/nouvelle',
+        title: 'Nouvelle dépense — AVIKA',
+        canActivate: [permissionGuard('manage_expenses')],
+        loadComponent: () =>
+          import('./features/expense-form/expense-form').then((module) => module.ExpenseForm),
+      },
+      {
+        path: 'depenses/:id',
+        title: 'Dépense — AVIKA',
+        canActivate: [permissionGuard('manage_expenses')],
+        loadComponent: () =>
+          import('./features/expense-form/expense-form').then((module) => module.ExpenseForm),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

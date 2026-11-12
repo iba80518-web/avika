@@ -1,0 +1,79 @@
+<div class="page">
+  <header class="page__head">
+    <div>
+      <p class="eyebrow">Charges</p>
+      <h1>Dépenses</h1>
+    </div>
+    <a class="btn" routerLink="/depenses/nouvelle">Nouvelle dépense</a>
+  </header>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !error()) {
+    <div class="list" aria-busy="true">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="row glass skeleton"></div>
+      }
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    <p class="notice glass">L’aliment ne se saisit pas ici : il est déjà compté par le stock.</p>
+
+    @if (expenses().length > 0) {
+      <section class="kpis" aria-label="Résumé des dépenses">
+        <article class="kpi glass">
+          <span class="kpi__label">Total des dépenses</span>
+          <strong class="kpi__value">{{ compact(total()) }} <small>GNF</small></strong>
+          <span class="muted">{{ money(total()) }}</span>
+        </article>
+        <article class="kpi glass">
+          <span class="kpi__label">Plus gros poste</span>
+          <strong class="kpi__value kpi__value--text">{{ byCategory()[0].label }}</strong>
+          <span class="muted">{{ money(byCategory()[0].total) }}</span>
+        </article>
+      </section>
+
+      @if (hasMore()) {
+        <p class="notice glass">Seules les dépenses les plus récentes sont affichées : les totaux portent sur elles.</p>
+      }
+
+      <section class="card glass">
+        <h2>Où part l’argent</h2>
+        <ul class="bars">
+          @for (item of byCategory(); track item.category) {
+            <li>
+              <div class="bars__top">
+                <span>{{ item.label }}</span>
+                <strong>{{ money(item.total) }}</strong>
+              </div>
+              <div class="meter" role="img" [attr.aria-label]="item.percent + ' % du plus gros poste'">
+                <div class="meter__fill" [style.width.%]="item.percent"></div>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="list" aria-label="Liste des dépenses">
+      @if (expenses().length === 0) {
+        <p class="empty glass">Aucune dépense pour le moment. Ajoutez votre première dépense.</p>
+      }
+      @for (e of expenses(); track e.id) {
+        <a class="row glass" [routerLink]="['/depenses', e.id]">
+          <div class="row__main">
+            <strong>{{ e.description || label(e.category) }}</strong>
+            <span class="muted">{{ shortDate(e.expense_date) }} · {{ label(e.category) }} · {{ cycleName(e.cycle) }}</span>
+          </div>
+          <strong class="row__amount">{{ money(e.amount) }}</strong>
+        </a>
+      }
+    </section>
+  }
+</div>
