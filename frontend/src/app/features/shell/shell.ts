@@ -55,7 +55,12 @@ export class Shell {
       path: '/depenses',
       permission: 'manage_expenses',
     },
-    { label: 'Santé', icon: 'M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z', path: null },
+    {
+      label: 'Santé',
+      icon: 'M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z',
+      path: '/sante',
+      permission: 'manage_health',
+    },
   ];
 
   protected readonly visibleNav = computed(() =>

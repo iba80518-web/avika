@@ -1,0 +1,137 @@
+<div class="page">
+  <header class="page__head">
+    <div>
+      <p class="eyebrow">Prévention</p>
+      <h1>Santé</h1>
+    </div>
+    <a class="btn" routerLink="/sante/nouvelle">Nouvelle tâche</a>
+  </header>
+
+  @if (error(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !error()) {
+    <div class="list" aria-busy="true">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="row glass skeleton"></div>
+      }
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    <section class="kpis" aria-label="Rappels">
+      <article class="kpi glass">
+        <span class="kpi__label">En retard</span>
+        <strong class="kpi__value" [class.is-alert]="counts().overdue > 0">{{ counts().overdue }}</strong>
+      </article>
+      <article class="kpi glass">
+        <span class="kpi__label">Aujourd’hui</span>
+        <strong class="kpi__value">{{ counts().today }}</strong>
+      </article>
+      <article class="kpi glass">
+        <span class="kpi__label">Demain</span>
+        <strong class="kpi__value">{{ counts().tomorrow }}</strong>
+      </article>
+    </section>
+
+    @if (notice(); as message) {
+      <p class="form-ok" role="status">{{ message }}</p>
+    }
+
+    <div class="seg" role="group" aria-label="Filtrer les tâches">
+      @for (item of filters; track item.value) {
+        <button
+          type="button"
+          [class.is-on]="filter() === item.value"
+          [attr.aria-pressed]="filter() === item.value"
+          (click)="setFilter(item.value)"
+        >
+          {{ item.label }}
+        </button>
+      }
+    </div>
+
+    @if (hasMore()) {
+      <p class="notice glass">Seules les premières tâches sont affichées.</p>
+    }
+
+    <section class="list" aria-label="Liste des tâches de santé">
+      @if (tasks().length === 0) {
+        <p class="empty glass">Aucune tâche ici pour le moment.</p>
+      }
+      @for (t of tasks(); track t.id) {
+        <article class="row glass" [class.is-muted]="t.status !== 'planned'">
+          <div class="row__top">
+            <div class="row__main">
+              <strong>{{ t.name }}</strong>
+              <span class="muted">
+                {{ kind(t.kind) }} · {{ t.cycle_name }}
+                @if (t.product_name) { · {{ t.product_name }} }
+              </span>
+              @if (t.status === 'planned') {
+                <span class="muted">Prévue le {{ shortDate(t.due_date) }}</span>
+              } @else if (t.done_date) {
+                <span class="muted">Faite le {{ shortDate(t.done_date) }}</span>
+              }
+            </div>
+            <span class="pill" [class]="'pill pill--' + badge(t).tone">{{ badge(t).text }}</span>
+          </div>
+
+          @if (t.status === 'planned' && openId() !== t.id && cancelId() !== t.id) {
+            <div class="actions">
+              <button type="button" class="btn" (click)="startComplete(t)">Réaliser</button>
+              <button type="button" class="btn btn--ghost" (click)="askCancel(t)">Annuler</button>
+            </div>
+          }
+
+          @if (openId() === t.id) {
+            <form class="panel" (submit)="onComplete($event, t)" novalidate>
+              <div class="field">
+                <label for="doneDate">Date de réalisation</label>
+                <input id="doneDate" type="date" [value]="doneDate()" [max]="today" (input)="doneDate.set(value($event))" />
+              </div>
+              <div class="field">
+                <label for="doneQty">Quantité utilisée (facultatif)</label>
+                <input id="doneQty" type="text" inputmode="decimal" placeholder="Dans l’unité du produit" [value]="doneQty()" (input)="doneQty.set(value($event))" />
+              </div>
+              @if (t.product !== null) {
+                <label class="check">
+                  <input id="useStock" type="checkbox" [checked]="useStock()" (change)="useStock.set($any($event.target).checked)" />
+                  <span>Retirer du stock ({{ t.product_name }})</span>
+                </label>
+              }
+              @if (completeError(); as message) {
+                <p class="form-error" role="alert">{{ message }}</p>
+              }
+              <div class="actions">
+                <button type="submit" class="btn" [disabled]="completing()">
+                  {{ completing() ? 'Enregistrement…' : 'Valider' }}
+                </button>
+                <button type="button" class="btn btn--ghost" (click)="abandonComplete()">Fermer</button>
+              </div>
+            </form>
+          }
+
+          @if (cancelId() === t.id) {
+            <div class="panel">
+              <p>Annuler « {{ t.name }} » ?</p>
+              @if (cancelError(); as message) {
+                <p class="form-error" role="alert">{{ message }}</p>
+              }
+              <div class="actions">
+                <button type="button" class="btn" [disabled]="cancelling()" (click)="cancel(t)">
+                  {{ cancelling() ? 'Annulation…' : 'Oui, annuler' }}
+                </button>
+                <button type="button" class="btn btn--ghost" (click)="abandonCancel()">Garder</button>
+              </div>
+            </div>
+          }
+        </article>
+      }
+    </section>
+  }
+</div>

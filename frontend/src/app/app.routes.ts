@@ -86,6 +86,19 @@ export const routes: Routes = [
           import('./features/expenses/expenses').then((module) => module.Expenses),
       },
       {
+        path: 'sante',
+        title: 'Santé — AVIKA',
+        canActivate: [permissionGuard('manage_health')],
+        loadComponent: () => import('./features/health/health').then((module) => module.Health),
+      },
+      {
+        path: 'sante/nouvelle',
+        title: 'Nouvelle tâche de santé — AVIKA',
+        canActivate: [permissionGuard('manage_health')],
+        loadComponent: () =>
+          import('./features/health-form/health-form').then((module) => module.HealthForm),
+      },
+      {
         path: 'depenses/nouvelle',
         title: 'Nouvelle dépense — AVIKA',
         canActivate: [permissionGuard('manage_expenses')],

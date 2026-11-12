@@ -1,0 +1,114 @@
+<div class="page">
+  <a class="back" routerLink="/sante">← Santé</a>
+
+  <header>
+    <h1>Nouvelle tâche</h1>
+    <p class="muted">Ajoutez un vaccin ou un traitement, ou planifiez tout un calendrier d’un coup.</p>
+  </header>
+
+  @if (loadError(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !loadError()) {
+    <div class="skeleton glass" aria-busy="true"></div>
+  }
+
+  @if (!loading() && !loadError()) {
+    @if (activeCycles().length === 0) {
+      <p class="state glass">Aucune bande en cours : démarrez une bande avant de planifier sa santé.</p>
+    } @else {
+      <div class="seg" role="group" aria-label="Type d’ajout">
+        <button type="button" [class.is-on]="mode() === 'task'" [attr.aria-pressed]="mode() === 'task'" (click)="pickMode('task')">Une tâche</button>
+        <button type="button" [class.is-on]="mode() === 'schedule'" [attr.aria-pressed]="mode() === 'schedule'" (click)="pickMode('schedule')">Calendrier type</button>
+      </div>
+
+      <form class="form glass" (submit)="onSubmit($event)" novalidate>
+        <div class="field">
+          <label for="cycle">Bande</label>
+          <select id="cycle" (change)="cycleId.set(value($event))">
+            <option value="">Choisir une bande</option>
+            @for (cycle of activeCycles(); track cycle.id) {
+              <option [value]="cycle.id">{{ cycle.name }}</option>
+            }
+          </select>
+        </div>
+
+        @if (mode() === 'task') {
+          <div class="field">
+            <label for="name">Nom de la tâche</label>
+            <input id="name" type="text" placeholder="Ex. Vaccin Newcastle" [value]="name()" (input)="name.set(value($event))" />
+          </div>
+
+          <div class="field">
+            <span class="label" id="kind-label">Type</span>
+            <div class="chips" role="group" aria-labelledby="kind-label">
+              @for (item of kinds; track item.value) {
+                <button type="button" [class.is-on]="kind() === item.value" [attr.aria-pressed]="kind() === item.value" (click)="kind.set(item.value)">
+                  {{ item.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="due">Date prévue</label>
+            <input id="due" type="date" [value]="dueDate()" (input)="dueDate.set(value($event))" />
+          </div>
+
+          @if (activeProducts().length > 0) {
+            <div class="field">
+              <label for="product">Produit utilisé (facultatif)</label>
+              <select id="product" (change)="productId.set(value($event))">
+                <option value="">Aucun produit</option>
+                @for (product of activeProducts(); track product.id) {
+                  <option [value]="product.id">{{ product.name }}</option>
+                }
+              </select>
+              <small class="muted">Le produit permet de retirer la quantité du stock à la réalisation.</small>
+            </div>
+          }
+
+          <div class="field">
+            <label for="note">Note (facultatif)</label>
+            <input id="note" type="text" [value]="note()" (input)="note.set(value($event))" />
+          </div>
+        } @else {
+          @if (activeTemplates().length === 0) {
+            <p class="muted">
+              Aucun calendrier type pour le moment. L’application ne propose aucun protocole médical : vos calendriers
+              seront créés avec votre vétérinaire. En attendant, ajoutez vos tâches une par une.
+            </p>
+          } @else {
+            <div class="field">
+              <label for="template">Calendrier type</label>
+              <select id="template" (change)="templateId.set(value($event))">
+                <option value="">Choisir un calendrier</option>
+                @for (template of activeTemplates(); track template.id) {
+                  <option [value]="template.id">{{ template.name }} ({{ itemCount(template) }} actes)</option>
+                }
+              </select>
+              <small class="muted">Les tâches sont créées aux bons jours d’âge. Relancer ne crée aucun doublon.</small>
+            </div>
+          }
+        }
+
+        @if (formError(); as message) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+        @if (notice(); as message) {
+          <p class="form-ok" role="status">{{ message }}</p>
+        }
+
+        @if (mode() === 'task' || activeTemplates().length > 0) {
+          <button type="submit" class="btn" [disabled]="saving()">
+            {{ saving() ? 'Enregistrement…' : mode() === 'task' ? 'Ajouter la tâche' : 'Planifier le calendrier' }}
+          </button>
+        }
+      </form>
+    }
+  }
+</div>
