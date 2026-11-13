@@ -144,21 +144,27 @@ export class CycleDetail {
     this.formError.set(null);
     this.notice.set(null);
     this.service
-      .recordMortality(cycle.id, {
+      .submitMortality(cycle.id, {
         event_type: 'mortality',
         quantity,
         event_date: this.date(),
         cause: this.cause(),
         uuid: this.pendingUuid,
-      })
+      }, `Mortalité · ${cycle.name}`)
       .subscribe({
-        next: () => {
+        next: (outcome) => {
           this.pendingUuid = newUuid();
           this.quantity.set(1);
           this.cause.set('');
-          this.notice.set(`${quantity} mortalité(s) enregistrée(s).`);
           this.saving.set(false);
-          this.refresh();
+          if (outcome.queued) {
+            this.notice.set(
+              `${quantity} mortalité(s) gardée(s) sur ce téléphone : envoi automatique au retour du réseau.`,
+            );
+          } else {
+            this.notice.set(`${quantity} mortalité(s) enregistrée(s).`);
+            this.refresh();
+          }
         },
         error: (error: unknown) => {
           this.formError.set(this.messageFor(error));

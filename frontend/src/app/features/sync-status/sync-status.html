@@ -1,0 +1,53 @@
+@if (visible()) {
+  <button
+    type="button"
+    class="sync__toggle glass"
+    [class.sync__toggle--off]="tone() === 'off'"
+    [class.sync__toggle--warn]="tone() === 'warn'"
+    [attr.aria-expanded]="open()"
+    (click)="open.set(!open())"
+  >
+    <span class="dot" aria-hidden="true"></span>
+    <span aria-live="polite">{{ label() }}</span>
+  </button>
+
+  @if (open()) {
+    <section class="sync__panel glass" aria-label="Saisies en attente d’envoi">
+      @if (!outbox.persistent) {
+        <p class="sync__alert">
+          Ce navigateur ne garde pas les saisies si vous fermez l’application : gardez-la ouverte jusqu’à l’envoi.
+        </p>
+      }
+      @if (!outbox.online()) {
+        <p class="sync__hint">Pas de réseau : vos saisies restent sur ce téléphone et partiront toutes seules.</p>
+      }
+
+      <ul class="sync__list">
+        @for (entry of items(); track entry.id) {
+          <li>
+            <div class="sync__main">
+              <strong>{{ entry.label }}</strong>
+              <span class="sync__hint">
+                {{ shortDate(entry.createdAt.slice(0, 10)) }} ·
+                {{ entry.status === 'rejected' ? 'Refusée' : 'En attente' }}
+              </span>
+              @if (entry.status === 'rejected' && entry.error) {
+                <span class="sync__alert">{{ entry.error }}</span>
+              }
+            </div>
+            @if (entry.status === 'rejected') {
+              <div class="sync__actions">
+                <button type="button" class="btn" (click)="outbox.retry(entry.id)">Réessayer</button>
+                <button type="button" class="btn btn--ghost" (click)="outbox.dismiss(entry.id)">Supprimer</button>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (outbox.online() && outbox.pending().length > 0) {
+        <button type="button" class="btn" (click)="sendNow()">Envoyer maintenant</button>
+      }
+    </section>
+  }
+}
