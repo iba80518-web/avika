@@ -18,6 +18,8 @@ PERMISSIONS = [
     ("record_mortality", "Enregistrer les mortalités"),
     ("manage_feed", "Gérer aliments et stocks"),
     ("manage_health", "Gérer vaccins et traitements"),
+    ("manage_eggs", "Gérer la ponte et les œufs"),
+    ("view_photos", "Voir les photos des volailles et des œufs"),
     ("manage_expenses", "Gérer les dépenses"),
     ("manage_sales", "Gérer les ventes"),
     ("manage_customers", "Gérer les clients"),
@@ -39,17 +41,17 @@ PERMISSION_CHOICES = PERMISSIONS
 DEFAULT_ROLE_PERMISSIONS = {
     Role.OWNER: set(PERMISSION_CODES),
     Role.MANAGER: {
-        "view_dashboard", "view_farming", "manage_coops", "manage_cycles",
+        "manage_eggs", "view_dashboard", "view_farming", "manage_coops", "manage_cycles",
         "record_mortality", "manage_feed", "manage_health", "manage_expenses",
         "manage_sales", "manage_customers", "manage_suppliers", "generate_reports",
     },
     Role.EMPLOYEE: {
-        "view_dashboard", "view_farming", "record_mortality", "manage_feed", "manage_health",
+        "manage_eggs", "view_dashboard", "view_farming", "record_mortality", "manage_feed", "manage_health",
     },
     Role.ACCOUNTANT: {
         "view_dashboard", "manage_expenses", "manage_sales", "manage_customers",
         "manage_suppliers", "view_finances", "generate_reports",
     },
-    Role.VET: {"view_farming", "manage_health"},
+    Role.VET: {"view_farming", "manage_health", "view_photos"},
     Role.OBSERVER: {"view_dashboard"},
 }
