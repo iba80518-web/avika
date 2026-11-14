@@ -1,0 +1,32 @@
+@if (allowed()) {
+  <section class="photo glass" aria-label="{{ title() }}">
+    <h3>{{ title() }} <span class="muted">(facultatif)</span></h3>
+
+    @if (done()) {
+      <p class="ok" role="status">Photo envoyée.</p>
+    }
+
+    @if (previewUrl(); as url) {
+      <img [src]="url" alt="Aperçu de la photo" />
+    }
+    @if (blob()) {
+      <p class="muted">Photo prête : {{ sizeKb() }} Ko</p>
+    }
+
+    <div class="actions">
+      <label class="btn btn--ghost">
+        <input type="file" accept="image/*" capture="environment" hidden (change)="onFile($event)" />
+        {{ preparing() ? 'Préparation…' : blob() ? 'Reprendre la photo' : done() ? 'Ajouter une autre photo' : 'Prendre une photo' }}
+      </label>
+      @if (blob()) {
+        <button type="button" class="btn" [disabled]="sending()" (click)="send()">
+          {{ sending() ? 'Envoi…' : 'Envoyer la photo' }}
+        </button>
+      }
+    </div>
+
+    @if (error(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </section>
+}

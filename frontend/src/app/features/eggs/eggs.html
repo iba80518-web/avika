@@ -107,6 +107,15 @@
         </button>
       </form>
 
+      @if (lastCollectionId(); as collectionId) {
+        <app-photo-capture
+          kind="eggs"
+          [cycle]="cycleId() ?? 0"
+          [date]="lastDate()"
+          [eggCollection]="collectionId"
+        />
+      }
+
       @if (days().length > 0) {
         <section class="history glass" aria-label="Historique de la ponte">
           <h2>30 derniers jours</h2>

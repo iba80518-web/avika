@@ -9,6 +9,7 @@ import { Cycle } from '../../core/farming.models';
 import { FarmingService } from '../../core/farming.service';
 import { formatNumber } from '../../core/money';
 import { newUuid } from '../../core/uuid';
+import { PhotoCapture } from '../photo-capture/photo-capture';
 
 const EGGS_PER_TRAY = 30;
 
@@ -20,7 +21,7 @@ function toInt(text: string): number | null {
 
 @Component({
   selector: 'app-eggs',
-  imports: [RouterLink],
+  imports: [RouterLink, PhotoCapture],
   templateUrl: './eggs.html',
   styleUrl: './eggs.scss',
 })
@@ -45,6 +46,9 @@ export class Eggs {
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly saved = signal<string | null>(null);
+  // Dernier ramassage enregistré : la photo s'y rattache.
+  protected readonly lastCollectionId = signal<number | null>(null);
+  protected readonly lastDate = signal(localToday());
 
   // Même identifiant tant que l'envoi n'a pas réussi : réessayer ne crée jamais de doublon.
   private uuid = newUuid();
@@ -112,6 +116,7 @@ export class Eggs {
 
   protected chooseCycle(event: Event): void {
     this.cycleId.set(Number(this.value(event)));
+    this.lastCollectionId.set(null);
     this.summary.set(null);
     this.loadSummary();
   }
@@ -162,7 +167,9 @@ export class Eggs {
         uuid: this.uuid,
       })
       .subscribe({
-        next: () => {
+        next: (collection) => {
+          this.lastCollectionId.set(collection?.id ?? null);
+          this.lastDate.set(this.date());
           this.saved.set(`Ramassage enregistré : ${formatNumber(collected - broken)} œufs en stock.`);
           this.collected.set('');
           this.broken.set('');
