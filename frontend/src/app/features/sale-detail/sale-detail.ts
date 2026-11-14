@@ -11,6 +11,7 @@ import { FinanceService } from '../../core/finance.service';
 import { formatMoney } from '../../core/money';
 import { parseNumber } from '../../core/numbers';
 import { newUuid } from '../../core/uuid';
+import { soldLabel, tierLabel } from '../../core/sale-labels';
 
 const EMPTY_CYCLES: Page<Cycle> = { count: 0, next: null, previous: null, results: [] };
 
@@ -28,6 +29,8 @@ const METHOD_LABELS: Record<string, string> = {
   styleUrl: './sale-detail.scss',
 })
 export class SaleDetail {
+  protected readonly sold = soldLabel;
+  protected readonly tier = tierLabel;
   private readonly finance = inject(FinanceService);
   private readonly farming = inject(FarmingService);
   private readonly saleId = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
@@ -190,7 +193,7 @@ export class SaleDetail {
         this.sale.set(cancelled);
         this.confirming.set(false);
         this.cancelling.set(false);
-        this.notice.set('Vente annulée : les poulets sont revenus dans l’effectif de la bande.');
+        this.notice.set('Vente annulée : l’effectif (ou le stock d’œufs) a été remis à jour.');
       },
       error: (error: unknown) => {
         this.cancelError.set(firstMessage(error, 'L’annulation a échoué. Réessayez.'));

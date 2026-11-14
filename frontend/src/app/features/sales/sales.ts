@@ -9,6 +9,7 @@ import { FarmingService } from '../../core/farming.service';
 import { Receivable, Sale } from '../../core/finance.models';
 import { FinanceService } from '../../core/finance.service';
 import { formatCompact, formatMoney } from '../../core/money';
+import { soldLabel } from '../../core/sale-labels';
 
 const EMPTY_CYCLES: Page<Cycle> = { count: 0, next: null, previous: null, results: [] };
 
@@ -19,6 +20,7 @@ const EMPTY_CYCLES: Page<Cycle> = { count: 0, next: null, previous: null, result
   styleUrl: './sales.scss',
 })
 export class Sales {
+  protected readonly sold = soldLabel;
   private readonly finance = inject(FinanceService);
   private readonly farming = inject(FarmingService);
 

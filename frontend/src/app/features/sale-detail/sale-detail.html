@@ -41,7 +41,7 @@
         <span class="kpi__label">Total</span>
         <strong class="kpi__value">{{ money(s.total_amount) }}</strong>
         <span class="muted">
-          {{ s.quantity }} poulet{{ s.quantity > 1 ? 's' : '' }} × {{ money(s.unit_price) }}{{ s.sale_type === 'weight' ? ' / kg · ' + s.weight_kg + ' kg' : '' }}
+          {{ sold(s) }} × {{ money(s.unit_price) }}{{ s.sale_type === 'weight' ? ' / kg · ' + s.weight_kg + ' kg' : '' }}{{ tier(s) }}
         </span>
       </article>
       <article class="kpi glass">
@@ -110,7 +110,7 @@
       <section class="card glass">
         <h2>Annuler cette vente</h2>
         @if (!confirming()) {
-          <p class="muted">En cas d’erreur de saisie : annulez, puis ressaisissez la vente. Les poulets reviendront dans l’effectif.</p>
+          <p class="muted">En cas d’erreur de saisie : annulez, puis ressaisissez la vente. L’effectif (ou le stock d’œufs) sera remis à jour.</p>
           <button type="button" class="btn btn--ghost" (click)="askCancel()">Annuler la vente</button>
         } @else {
           <div class="field">

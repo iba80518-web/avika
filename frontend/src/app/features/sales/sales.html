@@ -68,7 +68,7 @@
           <div class="row__main">
             <strong>{{ s.customer_name ?? 'Client de passage' }}</strong>
             <span class="muted">
-              {{ shortDate(s.sale_date) }} · {{ cycleName(s.cycle) }} · {{ s.quantity }} poulet{{ s.quantity > 1 ? 's' : '' }}
+              {{ shortDate(s.sale_date) }} · {{ cycleName(s.cycle) }} · {{ sold(s) }}
             </span>
           </div>
           <div class="row__side">
