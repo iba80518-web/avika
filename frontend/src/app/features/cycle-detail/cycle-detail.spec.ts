@@ -1,3 +1,5 @@
+import { OutboxService } from '../../core/outbox.service';
+import { OutboxStore } from '../../core/outbox.store';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -91,14 +93,19 @@ describe('CycleDetail', () => {
     submit();
     const first = http.expectOne('/api/v1/cycles/2/events/');
     const uuid = first.request.body.uuid;
+    // Sans réseau, la saisie n'échoue plus : elle est gardée sur le téléphone, avec le même identifiant.
+    const auth = TestBed.inject(AuthService) as unknown as Record<string, unknown>;
+    auth['activeOrganizationId'] ??= () => 1;
+    TestBed.inject(OutboxStore).forceMemory();
     first.error(new ProgressEvent('error'));
     await fixture.whenStable();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
     fixture.detectChanges();
-    expect(root.querySelector('[role="alert"]')?.textContent).toContain('Pas de connexion');
-    submit();
-    const second = http.expectOne('/api/v1/cycles/2/events/');
-    expect(second.request.body.uuid).toBe(uuid);
-    second.error(new ProgressEvent('error'));
+    const outbox = TestBed.inject(OutboxService);
+    expect(outbox.pending().length).toBe(1);
+    expect(outbox.pending()[0].uuid).toBe(uuid);
+    expect(root.textContent).toContain('gardée');
+    http.expectNone('/api/v1/cycles/2/events/');
   });
 
   function click(label: string): void {
