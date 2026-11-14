@@ -16,9 +16,10 @@ export class PhotoCapture {
   readonly cycle = input.required<number>();
   readonly kind = input.required<PhotoKind>();
   readonly date = input.required<string>();
-  // Pour relier la photo à un ramassage d'œufs ou à une mortalité qui vient d'être enregistré.
-  readonly eggCollection = input<number | null>(null);
-  readonly flockEvent = input<number | null>(null);
+  // Le ramassage ou la mortalité auquel la photo se rattache, par leur uuid : il est connu du
+  // téléphone avant l'envoi, donc la photo peut partir même si son parent est encore en attente.
+  readonly eggCollectionUuid = input<string | null>(null);
+  readonly flockEventUuid = input<string | null>(null);
   readonly uploaded = output<Photo>();
 
   private readonly photos = inject(PhotoService);
@@ -35,6 +36,8 @@ export class PhotoCapture {
   protected readonly preparing = signal(false);
   protected readonly sending = signal(false);
   protected readonly done = signal(false);
+  // Vrai quand la photo est gardée sur le téléphone en attendant le réseau.
+  protected readonly queued = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly sizeKb = computed(() => Math.max(1, Math.round((this.blob()?.size ?? 0) / 1024)));
 
@@ -72,23 +75,27 @@ export class PhotoCapture {
     this.sending.set(true);
     this.error.set(null);
     this.photos
-      .upload({
-        cycle: this.cycle(),
-        kind: this.kind(),
-        taken_date: this.date(),
-        image,
-        uuid: this.uuid,
-        egg_collection: this.eggCollection(),
-        flock_event: this.flockEvent(),
-      })
+      .submit(
+        {
+          cycle: this.cycle(),
+          kind: this.kind(),
+          taken_date: this.date(),
+          image,
+          uuid: this.uuid,
+          egg_collection_uuid: this.eggCollectionUuid(),
+          flock_event_uuid: this.flockEventUuid(),
+        },
+        `${this.title()} · ${this.date()}`,
+      )
       .subscribe({
-        next: (photo) => {
+        next: (outcome) => {
           this.done.set(true);
+          this.queued.set(outcome.queued);
           this.blob.set(null);
           this.releasePreview();
           this.uuid = newUuid();
           this.sending.set(false);
-          this.uploaded.emit(photo);
+          if (!outcome.queued) this.uploaded.emit(outcome.result);
         },
         error: (error: unknown) => {
           this.error.set(firstMessage(error, 'Envoi impossible. Réessayez.'));

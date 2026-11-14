@@ -47,7 +47,7 @@ export class Eggs {
   protected readonly formError = signal<string | null>(null);
   protected readonly saved = signal<string | null>(null);
   // Dernier ramassage enregistré : la photo s'y rattache.
-  protected readonly lastCollectionId = signal<number | null>(null);
+  protected readonly lastCollectionUuid = signal<string | null>(null);
   protected readonly lastDate = signal(localToday());
 
   // Même identifiant tant que l'envoi n'a pas réussi : réessayer ne crée jamais de doublon.
@@ -116,7 +116,7 @@ export class Eggs {
 
   protected chooseCycle(event: Event): void {
     this.cycleId.set(Number(this.value(event)));
-    this.lastCollectionId.set(null);
+    this.lastCollectionUuid.set(null);
     this.summary.set(null);
     this.loadSummary();
   }
@@ -158,25 +158,32 @@ export class Eggs {
 
     this.saving.set(true);
     this.eggs
-      .create({
-        cycle,
-        collected_date: this.date(),
-        collected,
-        broken,
-        note: this.note().trim(),
-        uuid: this.uuid,
-      })
+      .submitCollection(
+        {
+          cycle,
+          collected_date: this.date(),
+          collected,
+          broken,
+          note: this.note().trim(),
+          uuid: this.uuid,
+        },
+        `Ramassage d’œufs · ${this.date()}`,
+      )
       .subscribe({
-        next: (collection) => {
-          this.lastCollectionId.set(collection?.id ?? null);
+        next: (outcome) => {
+          this.lastCollectionUuid.set(this.uuid);
           this.lastDate.set(this.date());
-          this.saved.set(`Ramassage enregistré : ${formatNumber(collected - broken)} œufs en stock.`);
+          this.saved.set(
+            outcome.queued
+              ? 'Ramassage gardé sur ce téléphone : envoi automatique au retour du réseau.'
+              : `Ramassage enregistré : ${formatNumber(collected - broken)} œufs en stock.`,
+          );
           this.collected.set('');
           this.broken.set('');
           this.note.set('');
           this.uuid = newUuid();
           this.saving.set(false);
-          this.loadSummary();
+          if (!outcome.queued) this.loadSummary();
         },
         error: (error: unknown) => {
           this.formError.set(firstMessage(error, 'Enregistrement impossible. Réessayez.'));

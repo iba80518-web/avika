@@ -3,7 +3,9 @@
     <h3>{{ title() }} <span class="muted">(facultatif)</span></h3>
 
     @if (done()) {
-      <p class="ok" role="status">Photo envoyée.</p>
+      <p class="ok" role="status">
+        {{ queued() ? 'Photo gardée sur ce téléphone : envoi automatique au retour du réseau.' : 'Photo envoyée.' }}
+      </p>
     }
 
     @if (previewUrl(); as url) {

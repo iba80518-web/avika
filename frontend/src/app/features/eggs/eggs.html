@@ -107,12 +107,12 @@
         </button>
       </form>
 
-      @if (lastCollectionId(); as collectionId) {
+      @if (lastCollectionUuid(); as collectionUuid) {
         <app-photo-capture
           kind="eggs"
           [cycle]="cycleId() ?? 0"
           [date]="lastDate()"
-          [eggCollection]="collectionId"
+          [eggCollectionUuid]="collectionUuid"
         />
       }
 

@@ -56,7 +56,7 @@ export class CycleDetail {
   protected readonly date = signal(localToday());
   protected readonly saving = signal(false);
   // Dernière mortalité enregistrée (envoi réussi) : la photo s'y rattache.
-  protected readonly photoTarget = signal<{ event: number; cycle: number; date: string } | null>(null);
+  protected readonly photoTarget = signal<{ event: string; cycle: number; date: string } | null>(null);
   protected readonly formError = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
 
@@ -157,7 +157,9 @@ export class CycleDetail {
       }, `Mortalité · ${cycle.name}`)
       .subscribe({
         next: (outcome) => {
+          const sentUuid = this.pendingUuid;
           this.pendingUuid = newUuid();
+          this.photoTarget.set({ event: sentUuid, cycle: cycle.id, date: this.date() });
           this.quantity.set(1);
           this.cause.set('');
           this.saving.set(false);
@@ -167,9 +169,6 @@ export class CycleDetail {
             );
           } else {
             this.notice.set(`${quantity} mortalité(s) enregistrée(s).`);
-            if (outcome.result?.id) {
-              this.photoTarget.set({ event: outcome.result.id, cycle: cycle.id, date: this.date() });
-            }
             this.refresh();
           }
         },

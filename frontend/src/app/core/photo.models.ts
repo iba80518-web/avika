@@ -32,4 +32,7 @@ export interface NewPhoto {
   note?: string;
   egg_collection?: number | null;
   flock_event?: number | null;
+  // Lien par uuid : sert à l'envoi différé, quand l'identifiant serveur n'existe pas encore.
+  egg_collection_uuid?: string | null;
+  flock_event_uuid?: string | null;
 }
