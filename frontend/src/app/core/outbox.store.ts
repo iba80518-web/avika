@@ -8,6 +8,8 @@ export interface OutboxEntry {
   uuid: string;
   url: string;
   body: unknown;
+  // Photo gardée sur le téléphone ; « body » contient alors ses champs de formulaire.
+  file?: Blob;
   label: string;
   organization: number | null;
   createdAt: string;

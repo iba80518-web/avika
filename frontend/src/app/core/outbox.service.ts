@@ -25,6 +25,16 @@ function isRejection(error: unknown): boolean {
   );
 }
 
+// Formulaire d'une photo : champs texte puis fichier, comme l'attend le serveur.
+function toForm(fields: unknown, file: Blob): FormData {
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields as Record<string, string>)) {
+    form.append(key, value);
+  }
+  form.append('image', file, 'photo.jpg');
+  return form;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OutboxService {
   private readonly http = inject(HttpClient);
@@ -84,12 +94,38 @@ export class OutboxService {
     );
   }
 
-  private async enqueue(label: string, url: string, body: unknown, uuid: string): Promise<void> {
+  /** Comme submit, pour une photo : sans réseau, le fichier est gardé sur le téléphone. */
+  submitPhoto<T>(
+    label: string,
+    url: string,
+    fields: Record<string, string>,
+    file: Blob,
+    uuid: string,
+  ): Observable<SubmitResult<T>> {
+    const queue = () =>
+      from(this.enqueue(label, url, fields, uuid, file)).pipe(
+        map((): SubmitResult<T> => ({ queued: true })),
+      );
+    if (!this.online()) return queue();
+    return this.http.post<T>(url, toForm(fields, file)).pipe(
+      map((result): SubmitResult<T> => ({ queued: false, result })),
+      catchError((error: unknown) => (isNetworkError(error) ? queue() : throwError(() => error))),
+    );
+  }
+
+  private async enqueue(
+    label: string,
+    url: string,
+    body: unknown,
+    uuid: string,
+    file?: Blob,
+  ): Promise<void> {
     if (this.entries().some((entry) => entry.uuid === uuid && entry.url === url)) return;
     const saved = await this.store.add({
       uuid,
       url,
       body,
+      ...(file ? { file } : {}),
       label,
       organization: this.auth.activeOrganizationId(),
       createdAt: new Date().toISOString(),
@@ -113,7 +149,8 @@ export class OutboxService {
 
   private async send(entry: OutboxEntry): Promise<'next' | 'stop'> {
     try {
-      await firstValueFrom(this.http.post(entry.url, entry.body));
+      const payload = entry.file ? toForm(entry.body, entry.file) : entry.body;
+      await firstValueFrom(this.http.post(entry.url, payload));
       await this.drop(entry.id);
       return 'next';
     } catch (error) {
