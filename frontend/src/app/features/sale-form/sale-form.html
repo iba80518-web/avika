@@ -216,6 +216,10 @@
           <p class="form-error" role="alert">{{ message }}</p>
         }
 
+        @if (notice(); as message) {
+          <p class="form-ok" role="status">{{ message }}</p>
+        }
+
         <button type="submit" class="btn" [disabled]="saving()">
           {{ saving() ? 'Enregistrement…' : 'Enregistrer la vente' }}
         </button>

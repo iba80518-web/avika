@@ -5,7 +5,9 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { fieldErrors, firstMessage } from '../../core/api-errors';
 import { localToday } from '../../core/dates';
 import { Cycle, Page } from '../../core/farming.models';
+import { API_BASE } from '../../core/api.config';
 import { EggService } from '../../core/egg.service';
+import { OutboxService, SubmitResult } from '../../core/outbox.service';
 import { FarmingService } from '../../core/farming.service';
 import {
   Customer,
@@ -13,6 +15,7 @@ import {
   NewSale,
   PaymentMethod,
   PriceTier,
+  Sale,
   SaleProduct,
   SaleType,
 } from '../../core/finance.models';
@@ -36,6 +39,7 @@ export class SaleForm {
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
   private readonly eggService = inject(EggService);
+  private readonly outbox = inject(OutboxService);
 
   protected readonly types: { value: SaleType; label: string }[] = [
     { value: 'count', label: 'Au nombre' },
@@ -87,6 +91,8 @@ export class SaleForm {
   protected readonly note = signal('');
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
+  // Message vert : la vente est gardée sur le téléphone, faute de réseau.
+  protected readonly notice = signal<string | null>(null);
 
   protected readonly customerTypes = CUSTOMER_TYPES;
   protected readonly newCustomerOpen = signal(false);
@@ -286,8 +292,10 @@ export class SaleForm {
 
     this.saving.set(true);
     this.formError.set(null);
-    this.finance.recordSale(body).subscribe({
-      next: (sale) => void this.router.navigate(['/ventes', sale.id]),
+    this.outbox
+      .submit<Sale>(`Vente · ${this.date()}`, `${API_BASE}/sales/`, body, body.uuid)
+      .subscribe({
+      next: (outcome) => this.afterSave(outcome),
       error: (error: unknown) => {
         this.formError.set(
           firstMessage(error, 'L’enregistrement a échoué. Votre saisie est gardée : réessayez.'),
@@ -297,8 +305,25 @@ export class SaleForm {
     });
   }
 
+  // Réseau là : on ouvre la vente. Sinon elle est gardée, le formulaire se vide pour la suivante.
+  private afterSave(outcome: SubmitResult<Sale>): void {
+    if (!outcome.queued) {
+      void this.router.navigate(['/ventes', outcome.result.id]);
+      return;
+    }
+    this.pendingUuid = newUuid();
+    this.quantity.set('');
+    this.weight.set('');
+    this.price.set('');
+    this.paid.set('');
+    this.note.set('');
+    this.saving.set(false);
+    this.notice.set('Vente gardée sur ce téléphone : envoi automatique au retour du réseau.');
+  }
+
   protected onSubmit(event: Event): void {
     event.preventDefault();
+    this.notice.set(null);
     this.save();
   }
 
@@ -364,8 +389,10 @@ export class SaleForm {
 
     this.saving.set(true);
     this.formError.set(null);
-    this.finance.recordSale(body).subscribe({
-      next: (sale) => void this.router.navigate(['/ventes', sale.id]),
+    this.outbox
+      .submit<Sale>(`Vente · ${this.date()}`, `${API_BASE}/sales/`, body, body.uuid)
+      .subscribe({
+      next: (outcome) => this.afterSave(outcome),
       error: (error: unknown) => {
         this.formError.set(
           firstMessage(error, 'L’enregistrement a échoué. Votre saisie est gardée : réessayez.'),

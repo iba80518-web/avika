@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { OutboxStore } from '../../core/outbox.store';
 import { SaleForm } from './sale-form';
 
 const LAYER = { id: 5, name: 'Pondeuses A', type: 'layer', status: 'active', current_count: 900 };
@@ -96,5 +97,17 @@ describe('SaleForm — vente d\'œufs', () => {
     (root.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
     fixture.detectChanges();
     expect(root.textContent).toContain('Il ne reste que 290 œufs');
+  });
+  it('garde la vente sur le téléphone quand le réseau manque', async () => {
+    const fixture = setup();
+    TestBed.inject(OutboxStore).forceMemory();
+    const root = switchToEggs(fixture);
+    type(root, 'qty', '5');
+    type(root, 'price', '3000');
+    (root.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    http.expectOne('/api/v1/sales/').error(new ProgressEvent('error'));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    expect(root.textContent).toContain('gardée sur ce téléphone');
   });
 });
