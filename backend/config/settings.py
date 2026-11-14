@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "dashboard",
     "health",
     "eggs",
+    "photos",
     "reports",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
@@ -143,3 +144,12 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = "same-origin"
     X_FRAME_OPTIONS = "DENY"
+
+
+# Photos des volailles et des œufs : dossier PRIVÉ (jamais servi directement par le web).
+import os as _os  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+PHOTOS_ROOT = _Path(_os.environ.get("PHOTOS_ROOT", "/photos"))
+PHOTO_MAX_UPLOAD_BYTES = 8 * 1024 * 1024  # 8 Mo reçus au maximum
+PHOTO_MAX_SIDE = 1600  # côté le plus long après réduction, en pixels

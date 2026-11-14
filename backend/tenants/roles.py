@@ -20,6 +20,7 @@ PERMISSIONS = [
     ("manage_health", "Gérer vaccins et traitements"),
     ("manage_eggs", "Gérer la ponte et les œufs"),
     ("view_photos", "Voir les photos des volailles et des œufs"),
+    ("add_photos", "Envoyer des photos des volailles et des œufs"),
     ("manage_expenses", "Gérer les dépenses"),
     ("manage_sales", "Gérer les ventes"),
     ("manage_customers", "Gérer les clients"),
@@ -41,12 +42,12 @@ PERMISSION_CHOICES = PERMISSIONS
 DEFAULT_ROLE_PERMISSIONS = {
     Role.OWNER: set(PERMISSION_CODES),
     Role.MANAGER: {
-        "manage_eggs", "view_dashboard", "view_farming", "manage_coops", "manage_cycles",
+        "manage_eggs", "add_photos", "view_dashboard", "view_farming", "manage_coops", "manage_cycles",
         "record_mortality", "manage_feed", "manage_health", "manage_expenses",
         "manage_sales", "manage_customers", "manage_suppliers", "generate_reports",
     },
     Role.EMPLOYEE: {
-        "manage_eggs", "view_dashboard", "view_farming", "record_mortality", "manage_feed", "manage_health",
+        "manage_eggs", "add_photos", "view_dashboard", "view_farming", "record_mortality", "manage_feed", "manage_health",
     },
     Role.ACCOUNTANT: {
         "view_dashboard", "manage_expenses", "manage_sales", "manage_customers",

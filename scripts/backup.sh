@@ -19,6 +19,13 @@ if [ "$size" -lt 1000 ]; then
     exit 1
 fi
 
+# Photos : leur volume est sauvegardé à part (sinon la base garderait des lignes sans image).
+photos="backups/avika-photos-$(date +%Y%m%d-%H%M%S).tar.gz"
+docker compose exec -T backend sh -c 'mkdir -p /photos && tar -czf - -C /photos .' > "$photos"
+chmod 600 "$photos"
+
 # Rotation : on garde les 14 plus récentes.
 ls -1t backups/avika-*.sql.gz | tail -n +15 | xargs -r rm -f --
 echo "OK : $file ($size octets)"
+ls -1t backups/avika-photos-*.tar.gz 2>/dev/null | tail -n +15 | xargs -r rm -f --
+echo "OK : $photos ($(stat -c %s "$photos") octets)"

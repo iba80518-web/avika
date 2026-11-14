@@ -15,6 +15,7 @@ services:
     env_file: .env
     volumes:
       - ./backend:/app
+      - photos:/photos
     ports:
       - "127.0.0.1:8020:8000"
     depends_on:
@@ -24,3 +25,4 @@ services:
 
 volumes:
   pgdata:
+  photos:
