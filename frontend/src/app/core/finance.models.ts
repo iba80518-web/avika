@@ -12,6 +12,12 @@ export interface Sale {
   sale_type: SaleType;
   quantity: number;
   weight_kg: string | null;
+  // Vente d'œufs : « quantity » = nombre d'unités (plateaux, cartons, œufs).
+  product?: SaleProduct;
+  egg_unit?: EggUnit | '';
+  price_tier?: PriceTier | '';
+  eggs_per_unit?: number | null;
+  egg_count?: number | null;
   unit_price: number;
   total_amount: number;
   paid: number;
@@ -60,6 +66,10 @@ export interface NewSale {
   sale_type: SaleType;
   quantity: number;
   weight_kg?: number;
+  product?: SaleProduct;
+  egg_unit?: EggUnit;
+  price_tier?: PriceTier;
+  eggs_per_unit?: number;
   unit_price: number;
   paid_amount: number;
   payment_method: PaymentMethod;
@@ -72,3 +82,7 @@ export interface NewPayment {
   payment_date: string;
   method: PaymentMethod;
 }
+
+export type SaleProduct = 'birds' | 'eggs';
+export type EggUnit = 'egg' | 'tray' | 'crate';
+export type PriceTier = 'retail' | 'wholesale';

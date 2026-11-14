@@ -22,16 +22,81 @@
       <p class="state glass">Aucune bande en cours : démarrez une bande avant d’enregistrer une vente.</p>
     } @else {
       <form class="form glass" (submit)="onSubmit($event)" novalidate>
+        <div class="seg" role="group" aria-label="Ce que vous vendez">
+          @for (item of products; track item.value) {
+            <button
+              type="button"
+              [class.is-on]="product() === item.value"
+              [attr.aria-pressed]="product() === item.value"
+              (click)="pickProduct(item.value)"
+            >
+              {{ item.label }}
+            </button>
+          }
+        </div>
+
         <div class="field">
           <label for="cycle">Bande vendue</label>
-          <select id="cycle" (change)="cycleId.set(value($event))">
+          <select id="cycle" (change)="chooseCycle($event)">
             <option value="">Choisir une bande</option>
             @for (cycle of activeCycles(); track cycle.id) {
-              <option [value]="cycle.id">{{ cycle.name }} · {{ cycle.current_count }} poulets</option>
+              <option [value]="cycle.id" [selected]="cycleId() === '' + cycle.id">{{ cycle.name }} · {{ product() === 'eggs' ? 'pondeuses' : cycle.current_count + ' poulets' }}</option>
             }
           </select>
         </div>
 
+        @if (product() === 'eggs') {
+          @if (stock() !== null) {
+            <p class="preview">Stock d’œufs disponible : <strong>{{ number(stock() ?? 0) }}</strong></p>
+          }
+
+          <div class="seg" role="group" aria-label="Unité de vente">
+            @for (item of eggUnits; track item.value) {
+              <button
+                type="button"
+                [class.is-on]="eggUnit() === item.value"
+                [attr.aria-pressed]="eggUnit() === item.value"
+                (click)="eggUnit.set(item.value)"
+              >
+                {{ item.label }}
+              </button>
+            }
+          </div>
+
+          <div class="seg" role="group" aria-label="Tarif">
+            @for (item of tiers; track item.value) {
+              <button
+                type="button"
+                [class.is-on]="tier() === item.value"
+                [attr.aria-pressed]="tier() === item.value"
+                (click)="tier.set(item.value)"
+              >
+                {{ item.label }}
+              </button>
+            }
+          </div>
+
+          @if (eggUnit() === 'crate') {
+            <div class="field">
+              <label for="crate">Œufs dans un carton</label>
+              <input id="crate" type="text" inputmode="numeric" [value]="crateSize()" (input)="crateSize.set(value($event))" />
+            </div>
+          }
+
+          <div class="field">
+            <label for="qty">Nombre de {{ unitPlural() }}</label>
+            <input id="qty" type="text" inputmode="numeric" placeholder="0" [value]="quantity()" (input)="quantity.set(value($event))" />
+            @if (eggCount() > 0) {
+              <small class="muted">Soit {{ number(eggCount()) }} œufs retirés du stock.</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="price">Prix par {{ unitSingular() }} (GNF)</label>
+            <input id="price" type="text" inputmode="numeric" placeholder="0" [value]="price()" (input)="price.set(value($event))" />
+            <small class="muted">Le tarif (détail ou gros) est noté pour vos rapports ; vous saisissez le prix.</small>
+          </div>
+        } @else {
         <div class="seg" role="group" aria-label="Type de vente">
           @for (item of types; track item.value) {
             <button
@@ -62,6 +127,8 @@
           <label for="price">{{ type() === 'weight' ? 'Prix au kg (GNF)' : 'Prix par poulet (GNF)' }}</label>
           <input id="price" type="text" inputmode="numeric" placeholder="0" [value]="price()" (input)="price.set(value($event))" />
         </div>
+
+        }
 
         <div class="total" aria-live="polite">
           <div>

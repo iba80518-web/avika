@@ -170,3 +170,10 @@
   gap: 0.75rem;
   flex-wrap: wrap;
 }
+
+.preview {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  color: var(--leaf-strong);
+  background: color-mix(in srgb, var(--leaf) 10%, transparent);
+}
