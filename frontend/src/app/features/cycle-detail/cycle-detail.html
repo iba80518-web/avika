@@ -141,6 +141,15 @@
           </button>
         </form>
       </section>
+
+      @if (photoTarget(); as target) {
+        <app-photo-capture
+          kind="mortality"
+          [cycle]="target.cycle"
+          [date]="target.date"
+          [flockEvent]="target.event"
+        />
+      }
     }
 
     <section class="card glass">

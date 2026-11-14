@@ -10,6 +10,7 @@ import { Cycle, CycleSummary, EventType, FlockEvent } from '../../core/farming.m
 import { FarmingService } from '../../core/farming.service';
 import { formatNumber } from '../../core/money';
 import { newUuid } from '../../core/uuid';
+import { PhotoCapture } from '../photo-capture/photo-capture';
 
 const EVENT_LABELS: Record<EventType, string> = {
   entry: 'Entrée',
@@ -31,7 +32,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-cycle-detail',
-  imports: [RouterLink],
+  imports: [RouterLink, PhotoCapture],
   templateUrl: './cycle-detail.html',
   styleUrl: './cycle-detail.scss',
 })
@@ -54,6 +55,8 @@ export class CycleDetail {
   protected readonly cause = signal('');
   protected readonly date = signal(localToday());
   protected readonly saving = signal(false);
+  // Dernière mortalité enregistrée (envoi réussi) : la photo s'y rattache.
+  protected readonly photoTarget = signal<{ event: number; cycle: number; date: string } | null>(null);
   protected readonly formError = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
 
@@ -143,6 +146,7 @@ export class CycleDetail {
     this.saving.set(true);
     this.formError.set(null);
     this.notice.set(null);
+    this.photoTarget.set(null);
     this.service
       .submitMortality(cycle.id, {
         event_type: 'mortality',
@@ -163,6 +167,9 @@ export class CycleDetail {
             );
           } else {
             this.notice.set(`${quantity} mortalité(s) enregistrée(s).`);
+            if (outcome.result?.id) {
+              this.photoTarget.set({ event: outcome.result.id, cycle: cycle.id, date: this.date() });
+            }
             this.refresh();
           }
         },
