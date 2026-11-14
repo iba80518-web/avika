@@ -56,6 +56,12 @@ export class Shell {
       permission: 'manage_expenses',
     },
     {
+      label: 'Œufs',
+      icon: 'M12 2.5c-3.6 0-6.5 5.2-6.5 9.7 0 4 2.9 7.3 6.5 7.3s6.5-3.3 6.5-7.3c0-4.5-2.9-9.7-6.5-9.7zM9 14a3 3 0 0 0 3 3',
+      path: '/oeufs',
+      permission: 'manage_eggs',
+    },
+    {
       label: 'Santé',
       icon: 'M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z',
       path: '/sante',

@@ -1,0 +1,134 @@
+<div class="page">
+  <header>
+    <h1>Œufs</h1>
+    <p class="muted">Ramassage du jour, stock disponible et taux de ponte.</p>
+  </header>
+
+  @if (loadError(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !loadError()) {
+    <div class="skeleton glass" aria-busy="true"></div>
+  }
+
+  @if (!loading() && !loadError()) {
+    @if (cycles().length === 0) {
+      <div class="state glass">
+        <p>
+          Aucune bande de pondeuses en cours. Créez une bande de type « Pondeuses » et démarrez-la
+          pour saisir les œufs.
+        </p>
+        <a class="btn" routerLink="/bandes/nouvelle">Nouvelle bande</a>
+      </div>
+    } @else {
+      @if (cycles().length > 1) {
+        <div class="field">
+          <label for="cycle">Bande</label>
+          <select id="cycle" (change)="chooseCycle($event)">
+            @for (cycle of cycles(); track cycle.id) {
+              <option [value]="cycle.id" [selected]="cycleId() === cycle.id">{{ cycle.name }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (summary(); as s) {
+        <section class="kpis" aria-label="Résumé de la ponte">
+          <div class="kpi glass">
+            <span class="kpi__label">Stock d’œufs</span>
+            <strong class="kpi__value">{{ number(s.stock) }}</strong>
+            <span class="muted">soit {{ number(trays()) }} plateaux de 30</span>
+          </div>
+          <div class="kpi glass">
+            <span class="kpi__label">Dernier ramassage</span>
+            @if (lastDay(); as last) {
+              <strong class="kpi__value">{{ number(last.collected) }}</strong>
+              <span class="muted">{{ shortDate(last.date) }} · {{ number(last.broken) }} cassés</span>
+            } @else {
+              <strong class="kpi__value">—</strong>
+              <span class="muted">Aucun ramassage</span>
+            }
+          </div>
+          <div class="kpi glass">
+            <span class="kpi__label">Taux de ponte</span>
+            @if (lastDay(); as last) {
+              <strong class="kpi__value">{{ last.rate }} <small>%</small></strong>
+              <span class="muted">sur {{ number(last.hens) }} poules</span>
+            } @else {
+              <strong class="kpi__value">—</strong>
+              <span class="muted">Pas encore de données</span>
+            }
+          </div>
+        </section>
+      }
+
+      <form class="form glass" (submit)="onSubmit($event)" novalidate>
+        <h2>Ramassage</h2>
+
+        <div class="field">
+          <label for="date">Date</label>
+          <input id="date" type="date" [value]="date()" [max]="today" (input)="date.set(value($event))" />
+        </div>
+
+        <div class="field">
+          <label for="collected">Œufs ramassés</label>
+          <input id="collected" type="text" inputmode="numeric" placeholder="0" [value]="collected()" (input)="collected.set(value($event))" />
+        </div>
+
+        <div class="field">
+          <label for="broken">Œufs cassés ou perdus</label>
+          <input id="broken" type="text" inputmode="numeric" placeholder="0" [value]="broken()" (input)="broken.set(value($event))" />
+        </div>
+
+        @if (good() !== null) {
+          <p class="preview">
+            Œufs bons ajoutés au stock : <strong>{{ number(good() ?? 0) }}</strong>
+          </p>
+        }
+
+        <div class="field">
+          <label for="note">Note (facultatif)</label>
+          <input id="note" type="text" placeholder="Ex. Poulailler Nord, matin" [value]="note()" (input)="note.set(value($event))" />
+        </div>
+
+        @if (formError(); as message) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+        @if (saved(); as message) {
+          <p class="form-ok" role="status">{{ message }}</p>
+        }
+
+        <button type="submit" class="btn" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement…' : 'Enregistrer le ramassage' }}
+        </button>
+      </form>
+
+      @if (days().length > 0) {
+        <section class="history glass" aria-label="Historique de la ponte">
+          <h2>30 derniers jours</h2>
+          <ul>
+            @for (day of days(); track day.date) {
+              <li>
+                <div class="history__head">
+                  <span class="history__date">{{ shortDate(day.date) }}</span>
+                  <span class="history__count">{{ number(day.collected) }} œufs</span>
+                  <span class="history__rate">{{ day.rate }} %</span>
+                </div>
+                <div class="bar" aria-hidden="true">
+                  <span [style.width.%]="barWidth(day)"></span>
+                </div>
+                @if (day.broken > 0) {
+                  <span class="muted">dont {{ number(day.broken) }} cassés ou perdus</span>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  }
+</div>

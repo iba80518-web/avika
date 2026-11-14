@@ -86,6 +86,12 @@ export const routes: Routes = [
           import('./features/expenses/expenses').then((module) => module.Expenses),
       },
       {
+        path: 'oeufs',
+        title: 'Œufs — AVIKA',
+        canActivate: [permissionGuard('manage_eggs')],
+        loadComponent: () => import('./features/eggs/eggs').then((module) => module.Eggs),
+      },
+      {
         path: 'sante',
         title: 'Santé — AVIKA',
         canActivate: [permissionGuard('manage_health')],
