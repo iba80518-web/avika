@@ -38,11 +38,18 @@ def _check_cycle(cycle, day):
 
 
 def egg_stock(cycle):
-    """Œufs disponibles = ramassés moins cassés ou perdus (la vente d'œufs s'y soustraira ensuite)."""
-    total = EggCollection.objects.filter(cycle=cycle).aggregate(
-        total=Sum(F("collected") - F("broken"))
-    )["total"]
-    return total or 0
+    """Œufs en stock : ramassés − cassés ou perdus − vendus (ventes valides)."""
+    from django.db.models import Sum as _Sum
+
+    from finance.models import Sale  # import tardif : finance lit aussi la ponte
+
+    made = EggCollection.objects.filter(cycle=cycle).aggregate(c=_Sum("collected"), b=_Sum("broken"))
+    sold = (
+        Sale.objects.filter(cycle=cycle, product=Sale.Product.EGGS, status=Sale.Status.ACTIVE)
+        .aggregate(n=_Sum("egg_count"))["n"]
+        or 0
+    )
+    return (made["c"] or 0) - (made["b"] or 0) - sold
 
 
 def hens_on(cycle, day):

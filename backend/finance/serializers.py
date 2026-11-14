@@ -52,6 +52,19 @@ class SaleInputSerializer(serializers.Serializer):
     customer = TenantPrimaryKeyRelatedField(model=Customer, required=False, allow_null=True)
     sale_date = serializers.DateField()
     sale_type = serializers.ChoiceField(choices=Sale.SaleType.choices)
+    # Vente d'œufs : « quantity » = nombre d'unités (œufs, plateaux, cartons).
+    product = serializers.ChoiceField(
+        choices=Sale.Product.choices, required=False, default=Sale.Product.BIRDS
+    )
+    egg_unit = serializers.ChoiceField(
+        choices=Sale.EggUnit.choices, required=False, allow_blank=True, default=""
+    )
+    price_tier = serializers.ChoiceField(
+        choices=Sale.PriceTier.choices, required=False, allow_blank=True, default=""
+    )
+    eggs_per_unit = serializers.IntegerField(
+        min_value=1, max_value=5000, required=False, allow_null=True, default=None
+    )
     quantity = serializers.IntegerField(min_value=1)
     weight_kg = serializers.DecimalField(
         max_digits=10, decimal_places=3, required=False, allow_null=True
@@ -75,6 +88,7 @@ class SaleSerializer(serializers.ModelSerializer):
         model = Sale
         fields = [
             "id", "uuid", "customer", "customer_name", "cycle", "sale_date", "sale_type",
+            "product", "egg_unit", "price_tier", "eggs_per_unit", "egg_count",
             "quantity", "weight_kg", "unit_price", "total_amount", "paid", "balance",
             "status", "note", "created_by", "created_at",
         ]

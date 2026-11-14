@@ -86,6 +86,19 @@ class Sale(TenantModel):
         ACTIVE = "active", "Valide"
         CANCELLED = "cancelled", "Annulée"
 
+    class Product(models.TextChoices):
+        BIRDS = "birds", "Volailles"
+        EGGS = "eggs", "Œufs"
+
+    class EggUnit(models.TextChoices):
+        EGG = "egg", "À l'unité"
+        TRAY = "tray", "Plateau (30 œufs)"
+        CRATE = "crate", "Carton / casier"
+
+    class PriceTier(models.TextChoices):
+        RETAIL = "retail", "Détail"
+        WHOLESALE = "wholesale", "Gros"
+
     # Sans client : vente au comptant à un client de passage (donc payée en totalité).
     customer = models.ForeignKey(
         Customer, null=True, blank=True, on_delete=models.PROTECT, related_name="sales"
@@ -100,6 +113,13 @@ class Sale(TenantModel):
     # Prix par poulet (vente au nombre) ou par kg (vente au poids), unité minimale.
     unit_price = models.BigIntegerField("prix unitaire")
     total_amount = models.BigIntegerField("montant total")
+    # Ce qui est vendu. Pour des œufs, « quantity » = nombre d'unités vendues (plateaux, cartons…)
+    # et « egg_count » = nombre d'œufs retirés du stock.
+    product = models.CharField(max_length=10, choices=Product.choices, default=Product.BIRDS)
+    egg_unit = models.CharField(max_length=10, choices=EggUnit.choices, blank=True, default="")
+    price_tier = models.CharField(max_length=10, choices=PriceTier.choices, blank=True, default="")
+    eggs_per_unit = models.PositiveIntegerField(null=True, blank=True)
+    egg_count = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
     # Lien avec le journal du cheptel : la vente y a retiré des poulets.
     flock_event = models.OneToOneField(
@@ -121,6 +141,10 @@ class Sale(TenantModel):
             models.CheckConstraint(condition=Q(quantity__gt=0), name="sale_quantity_positive"),
             models.CheckConstraint(condition=Q(unit_price__gt=0), name="sale_unit_price_positive"),
             models.CheckConstraint(condition=Q(total_amount__gt=0), name="sale_total_positive"),
+            models.CheckConstraint(
+                condition=Q(product="birds") | Q(egg_count__isnull=False, egg_count__gt=0),
+                name="sale_eggs_need_egg_count",
+            ),
             models.CheckConstraint(
                 condition=Q(sale_type="count") | Q(weight_kg__isnull=False, weight_kg__gt=0),
                 name="sale_weight_required_when_by_weight",

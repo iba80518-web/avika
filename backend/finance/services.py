@@ -127,6 +127,115 @@ def cycle_payments_total(cycle):
     return total or 0
 
 
+EGGS_PER_TRAY = 30
+DEFAULT_EGGS_PER_CRATE = 360
+EGG_SALE_FIELDS = SALE_FIELDS + ["product", "egg_unit", "price_tier", "egg_count"]
+
+
+def eggs_per_unit_for(egg_unit, eggs_per_unit=None):
+    """Nombre d'œufs dans l'unité de vente choisie."""
+    if egg_unit == Sale.EggUnit.EGG:
+        return 1
+    if egg_unit == Sale.EggUnit.TRAY:
+        return EGGS_PER_TRAY
+    if egg_unit == Sale.EggUnit.CRATE:
+        size = eggs_per_unit or DEFAULT_EGGS_PER_CRATE
+        if size < 1 or size > 5000:
+            raise FinanceError("Le nombre d'œufs par carton doit être compris entre 1 et 5000.")
+        return size
+    raise FinanceError("Choisissez l'unité de vente : œuf, plateau ou carton.")
+
+
+def _record_egg_sale(
+    *, cycle, sale_date, quantity, unit_price, egg_unit, price_tier, eggs_per_unit,
+    customer, paid_amount, payment_method, user, note, uuid,
+):
+    """Vente d'œufs : retire des œufs du stock (pas des poulets) ; refuse si le stock manque."""
+    from eggs.services import egg_stock  # import tardif : eggs lit aussi les ventes
+
+    if uuid is not None:
+        existing = Sale.objects.filter(uuid=uuid).first()
+        if existing is not None:
+            if (existing.cycle_id, existing.quantity, existing.unit_price) != (
+                cycle.pk,
+                quantity,
+                unit_price,
+            ):
+                raise FinanceError("Cet identifiant d'opération a déjà servi pour autre chose.")
+            return existing, False
+
+    if quantity is None or quantity <= 0:
+        raise FinanceError("La quantité vendue doit être supérieure à 0.")
+    if unit_price is None or unit_price <= 0:
+        raise FinanceError("Le prix unitaire doit être supérieur à 0.")
+    if price_tier not in (Sale.PriceTier.RETAIL, Sale.PriceTier.WHOLESALE):
+        raise FinanceError("Choisissez le tarif : détail ou gros.")
+    per_unit = eggs_per_unit_for(egg_unit, eggs_per_unit)
+    egg_count = quantity * per_unit
+
+    total = quantity * unit_price
+    if paid_amount is None or paid_amount < 0 or paid_amount > total:
+        raise FinanceError("Le montant payé doit être compris entre 0 et le total de la vente.")
+    if paid_amount < total and customer is None:
+        raise FinanceError("Une vente non payée en totalité doit avoir un client.")
+    if customer is not None and not customer.is_active:
+        raise FinanceError("Ce client est désactivé.")
+
+    # Verrou sur le cycle : deux ventes simultanées ne peuvent pas vendre les mêmes œufs.
+    locked_cycle = Cycle.objects.select_for_update().get(pk=cycle.pk)
+    if locked_cycle.type != "layer":
+        raise FinanceError("Les œufs se vendent depuis une bande de pondeuses.")
+    if locked_cycle.status != Cycle.Status.ACTIVE:
+        raise FinanceError("Ce cycle n'est pas en cours.")
+    if sale_date < locked_cycle.start_date:
+        raise FinanceError("La date de vente précède le début du cycle.")
+    if sale_date > timezone.localdate():
+        raise FinanceError("La date de vente ne peut pas être dans le futur.")
+    stock = egg_stock(locked_cycle)
+    if egg_count > stock:
+        raise FinanceError(
+            f"Stock d'œufs insuffisant : {stock} œufs disponibles, {egg_count} demandés."
+        )
+
+    extra = {"uuid": uuid} if uuid is not None else {}
+    sale = Sale.objects.create(
+        customer=customer,
+        cycle=locked_cycle,
+        sale_date=sale_date,
+        product=Sale.Product.EGGS,
+        sale_type=Sale.SaleType.COUNT,
+        quantity=quantity,
+        unit_price=unit_price,
+        total_amount=total,
+        egg_unit=egg_unit,
+        price_tier=price_tier,
+        eggs_per_unit=per_unit,
+        egg_count=egg_count,
+        note=note,
+        created_by=user,
+        **extra,
+    )
+    if paid_amount > 0:
+        Payment.objects.create(
+            sale=sale,
+            amount=paid_amount,
+            payment_date=sale_date,
+            method=payment_method,
+            created_by=user,
+        )
+    log_action(
+        user=user,
+        action="sale.created",
+        obj=sale,
+        summary=(
+            f"Vente de {egg_count} œufs ({quantity} × {Sale.EggUnit(egg_unit).label}) "
+            f"pour {total}"
+        ),
+        after=snapshot(sale, EGG_SALE_FIELDS),
+    )
+    return sale, True
+
+
 @transaction.atomic
 def record_sale(
     *,
@@ -142,11 +251,22 @@ def record_sale(
     user=None,
     note="",
     uuid=None,
+    product=Sale.Product.BIRDS,
+    egg_unit="",
+    price_tier="",
+    eggs_per_unit=None,
 ):
     """Enregistre une vente, retire les poulets de l'effectif et note l'éventuel paiement.
 
     Renvoie (vente, créée). Un uuid déjà reçu ne crée pas de doublon.
     """
+    if product == Sale.Product.EGGS:
+        return _record_egg_sale(
+            cycle=cycle, sale_date=sale_date, quantity=quantity, unit_price=unit_price,
+            egg_unit=egg_unit, price_tier=price_tier, eggs_per_unit=eggs_per_unit,
+            customer=customer, paid_amount=paid_amount, payment_method=payment_method,
+            user=user, note=note, uuid=uuid,
+        )
     if uuid is not None:
         existing = Sale.objects.filter(uuid=uuid).first()
         if existing is not None:
@@ -284,6 +404,19 @@ def cancel_sale(sale, *, user=None, reason=""):
     text = f"Annulation de la vente {locked.pk}."
     if reason:
         text = f"{text} {reason}"
+    if locked.product == Sale.Product.EGGS:
+        # Vente d'œufs : aucun poulet à remettre ; le stock d'œufs remonte tout seul.
+        locked.status = Sale.Status.CANCELLED
+        locked.save(update_fields=["status", "updated_at"])
+        log_action(
+            user=user,
+            action="sale.cancelled",
+            obj=locked,
+            summary=text,
+            before={"status": Sale.Status.ACTIVE.value},
+            after={"status": Sale.Status.CANCELLED.value},
+        )
+        return locked
     try:
         event, _ = record_event(
             cycle=locked.cycle,
