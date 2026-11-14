@@ -74,6 +74,8 @@ def record_photo(
     note="",
     egg_collection_id=None,
     flock_event_id=None,
+    egg_collection_uuid=None,
+    flock_event_uuid=None,
     user=None,
     uuid=None,
 ):
@@ -99,6 +101,19 @@ def record_photo(
         raise PhotoError("La date précède le début de la bande.")
     if kind == Photo.Kind.EGGS and cycle.type != "layer":
         raise PhotoError("Les photos d'œufs concernent une bande de pondeuses.")
+
+    # Une photo prise hors connexion ne connaît que l'uuid du ramassage ou de la mortalité
+    # (créé sur le téléphone) : on retrouve ici l'enregistrement correspondant.
+    if egg_collection_uuid and not egg_collection_id:
+        found = EggCollection.objects.filter(uuid=egg_collection_uuid, cycle=cycle).first()
+        if found is None:
+            raise PhotoError("Ramassage introuvable pour cette bande.")
+        egg_collection_id = found.pk
+    if flock_event_uuid and not flock_event_id:
+        found = FlockEvent.objects.filter(uuid=flock_event_uuid, cycle=cycle).first()
+        if found is None:
+            raise PhotoError("Mortalité introuvable pour cette bande.")
+        flock_event_id = found.pk
 
     collection = None
     event = None

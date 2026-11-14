@@ -37,4 +37,7 @@ class PhotoInputSerializer(serializers.Serializer):
     flock_event = serializers.IntegerField(
         required=False, allow_null=True, default=None, source="flock_event_id"
     )
+    # Lien par uuid : sert aux photos envoyées après coup, quand l'identifiant serveur n'existe pas encore.
+    egg_collection_uuid = serializers.UUIDField(required=False, allow_null=True, default=None)
+    flock_event_uuid = serializers.UUIDField(required=False, allow_null=True, default=None)
     image = serializers.FileField()

@@ -206,3 +206,17 @@ class PhotoApiTests(APITestCase):
         photo = self.send().json()
         self.assertIn(self.ca.delete(f"{URL}{photo['id']}/").status_code, (403, 405))
         self.assertEqual(self.ca.get(f"{URL}{photo['id']}/").status_code, 200)
+
+    def test_10_la_photo_se_lie_au_ramassage_par_son_identifiant(self):
+        collection_uuid = str(uuid4())
+        collection = self.create(
+            self.ca, "/api/v1/egg-collections/",
+            {"cycle": self.cycle["id"], "collected_date": DAY, "collected": 300, "broken": 10,
+             "uuid": collection_uuid},
+        )
+        linked = self.send(egg_collection_uuid=collection_uuid)
+        self.assertEqual(linked.status_code, 201, linked.content)
+        self.assertEqual(linked.json()["egg_collection"], collection["id"])
+        unknown = self.send(egg_collection_uuid=str(uuid4()))
+        self.assertEqual(unknown.status_code, 400, unknown.content)
+        self.assertIn("Ramassage introuvable", unknown.content.decode())
