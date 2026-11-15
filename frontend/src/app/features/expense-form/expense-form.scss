@@ -115,3 +115,12 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+.form-ok {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.925rem;
+  color: var(--leaf-strong);
+  background: color-mix(in srgb, var(--leaf) 14%, transparent);
+}

@@ -14,6 +14,9 @@ import { Cycle, Page } from '../../core/farming.models';
 import { FarmingService } from '../../core/farming.service';
 import { parseNumber } from '../../core/numbers';
 import { newUuid } from '../../core/uuid';
+import { API_BASE as EXPENSES_API } from '../../core/api.config';
+import { Expense as ExpenseRecord, NewExpense as ExpenseBody } from '../../core/expense.models';
+import { OutboxService } from '../../core/outbox.service';
 
 const EMPTY_CYCLES: Page<Cycle> = { count: 0, next: null, previous: null, results: [] };
 
@@ -24,6 +27,9 @@ const EMPTY_CYCLES: Page<Cycle> = { count: 0, next: null, previous: null, result
   styleUrl: './expense-form.scss',
 })
 export class ExpenseForm {
+  private readonly outbox = inject(OutboxService);
+  // Message vert : la dépense est gardée sur le téléphone, faute de réseau.
+  protected readonly notice = signal<string | null>(null);
   private readonly service = inject(ExpenseService);
   private readonly farming = inject(FarmingService);
   private readonly router = inject(Router);
@@ -117,31 +123,45 @@ export class ExpenseForm {
 
     this.saving.set(true);
     this.formError.set(null);
-    const request$ =
-      this.expenseId === null
-        ? this.service.create({
-            uuid: this.pendingUuid,
-            amount,
-            expense_date: this.date(),
-            category,
-            description,
-            ...(cycle === null ? {} : { cycle }),
-          })
-        : this.service.update(this.expenseId, {
-            amount,
-            expense_date: this.date(),
-            category,
-            description,
-            cycle,
-          });
-    request$.subscribe({
-      next: () => void this.router.navigate(['/depenses']),
-      error: (error: unknown) => {
-        this.formError.set(
-          firstMessage(error, 'L’enregistrement a échoué. Votre saisie est gardée : réessayez.'),
-        );
-        this.saving.set(false);
-      },
-    });
+    this.notice.set(null);
+    const fail = (error: unknown) => {
+      this.formError.set(
+        firstMessage(error, 'L’enregistrement a échoué. Votre saisie est gardée : réessayez.'),
+      );
+      this.saving.set(false);
+    };
+
+    // Modifier une dépense déjà enregistrée exige le serveur : pas de mise en attente.
+    if (this.expenseId !== null) {
+      this.service
+        .update(this.expenseId, { amount, expense_date: this.date(), category, description, cycle })
+        .subscribe({ next: () => void this.router.navigate(['/depenses']), error: fail });
+      return;
+    }
+
+    const body: ExpenseBody = {
+      uuid: this.pendingUuid,
+      amount,
+      expense_date: this.date(),
+      category,
+      description,
+      ...(cycle === null ? {} : { cycle }),
+    };
+    this.outbox
+      .submit<ExpenseRecord>(`Dépense · ${this.date()}`, `${EXPENSES_API}/expenses/`, body, body.uuid)
+      .subscribe({
+        next: (outcome) => {
+          if (!outcome.queued) {
+            void this.router.navigate(['/depenses']);
+            return;
+          }
+          this.pendingUuid = newUuid();
+          this.amount.set('');
+          this.description.set('');
+          this.saving.set(false);
+          this.notice.set('Dépense gardée sur ce téléphone : envoi automatique au retour du réseau.');
+        },
+        error: fail,
+      });
   }
 }

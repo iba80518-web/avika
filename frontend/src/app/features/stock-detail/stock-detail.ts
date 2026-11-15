@@ -11,6 +11,8 @@ import { NewMovement, Product, StockMovement } from '../../core/inventory.models
 import { formatMoney } from '../../core/money';
 import { formatQuantity } from '../../core/quantity';
 import { newUuid } from '../../core/uuid';
+import { API_BASE as STOCK_API } from '../../core/api.config';
+import { OutboxService } from '../../core/outbox.service';
 
 type Kind = 'entry' | 'exit' | 'loss';
 
@@ -30,6 +32,7 @@ const EMPTY_CYCLES: Page<Cycle> = { count: 0, next: null, previous: null, result
   styleUrl: './stock-detail.scss',
 })
 export class StockDetail {
+  private readonly outbox = inject(OutboxService);
   private readonly inventory = inject(InventoryService);
   private readonly farming = inject(FarmingService);
   private readonly productId = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
@@ -170,16 +173,27 @@ export class StockDetail {
     this.saving.set(true);
     this.formError.set(null);
     this.notice.set(null);
-    this.inventory.recordMovement(product.id, body).subscribe({
-      next: () => {
+    this.outbox
+      .submit<StockMovement>(
+        `${MOVEMENT_LABELS[kind]} · ${product.name}`,
+        `${STOCK_API}/products/${product.id}/movements/`,
+        body,
+        body.uuid,
+      )
+      .subscribe({
+      next: (outcome) => {
         this.pendingUuid = newUuid();
         this.quantity.set('');
         this.cost.set('');
         this.note.set('');
         this.cycleId.set(null);
-        this.notice.set(`${MOVEMENT_LABELS[kind]} de ${formatQuantity(quantity)} ${product.base_unit} enregistrée.`);
+        this.notice.set(
+          outcome.queued
+            ? `${MOVEMENT_LABELS[kind]} gardée sur ce téléphone : envoi automatique au retour du réseau.`
+            : `${MOVEMENT_LABELS[kind]} de ${formatQuantity(quantity)} ${product.base_unit} enregistrée.`,
+        );
         this.saving.set(false);
-        this.refresh();
+        if (!outcome.queued) this.refresh();
       },
       error: (error: unknown) => {
         this.formError.set(
