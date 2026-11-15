@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
 
@@ -7,6 +7,7 @@ import { MeResponse, Membership, Tokens } from './auth.models';
 
 const REFRESH_KEY = 'avika.refresh';
 const ORGANIZATION_KEY = 'avika.organization';
+const PROFILE_KEY = 'avika.profile';
 
 // Le stockage du navigateur peut être absent ou refusé (navigation privée) : on ne plante jamais.
 function readStorage(key: string): string | null {
@@ -29,6 +30,23 @@ function writeStorage(key: string, value: string | null): void {
   }
 }
 
+// Coupure du réseau (et non refus du serveur) : la session reste valable.
+function isNetworkError(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && error.status === 0;
+}
+
+// Vide les données de lecture gardées par le service worker : à faire à chaque fin de session,
+// pour qu'un téléphone prêté ne montre rien de l'utilisateur précédent.
+function clearDataCache(): void {
+  if (typeof caches === 'undefined') return;
+  void caches
+    .keys()
+    .then((keys) =>
+      Promise.all(keys.filter((key) => key.includes(':data:')).map((key) => caches.delete(key))),
+    )
+    .catch(() => undefined);
+}
+
 /**
  * Connexion, session et droits de l'utilisateur.
  *
@@ -44,6 +62,9 @@ export class AuthService {
   private readonly organizationSignal = signal<number | null>(null);
   private refreshInFlight: Observable<string> | null = null;
 
+  /** Vrai quand la session a été rouverte sans réseau, avec le profil gardé sur le téléphone. */
+  readonly offlineSession = signal(false);
+
   readonly accessToken = this.accessSignal.asReadonly();
   readonly isAuthenticated = computed(() => this.meSignal() !== null);
   readonly user = computed(() => this.meSignal()?.user ?? null);
@@ -57,6 +78,43 @@ export class AuthService {
     );
   });
   readonly activeOrganizationId = computed(() => this.activeMembership()?.organization.id ?? null);
+
+  constructor() {
+    // Le réseau revient : on revalide la session ouverte hors connexion.
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        if (this.offlineSession()) this.revalidate().subscribe({ error: () => undefined });
+      });
+    }
+  }
+
+  private revalidate(): Observable<void> {
+    return this.refreshAccess().pipe(
+      switchMap(() => this.loadProfile()),
+      catchError((error: unknown) => {
+        if (isNetworkError(error)) return of(undefined);
+        this.clearSession();
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  // Rouvre la session avec le profil gardé sur le téléphone (aucun appel au serveur).
+  private restoreOffline(): boolean {
+    const raw = readStorage(PROFILE_KEY);
+    if (raw === null) return false;
+    try {
+      const me = JSON.parse(raw) as MeResponse;
+      this.meSignal.set(me);
+      const saved = Number(readStorage(ORGANIZATION_KEY));
+      const known = me.memberships.some((item) => item.organization.id === saved);
+      this.organizationSignal.set(known ? saved : (me.memberships[0]?.organization.id ?? null));
+      this.offlineSession.set(true);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   /** Vrai si l'utilisateur a le droit demandé dans l'exploitation active. */
   can(permission: string): boolean {
@@ -92,7 +150,9 @@ export class AuthService {
     return this.refreshAccess().pipe(
       switchMap(() => this.loadProfile()),
       map(() => true),
-      catchError(() => {
+      catchError((error: unknown) => {
+        // Réseau absent : on garde la session (et le jeton) ; seul un refus du serveur déconnecte.
+        if (isNetworkError(error)) return of(this.restoreOffline());
         this.clearSession();
         return of(false);
       }),
@@ -144,12 +204,17 @@ export class AuthService {
     this.organizationSignal.set(null);
     writeStorage(REFRESH_KEY, null);
     writeStorage(ORGANIZATION_KEY, null);
+    writeStorage(PROFILE_KEY, null);
+    this.offlineSession.set(false);
+    clearDataCache();
   }
 
   private loadProfile(): Observable<void> {
     return this.http.get<MeResponse>(`${API_BASE}/auth/me/`).pipe(
       tap((me) => {
         this.meSignal.set(me);
+        writeStorage(PROFILE_KEY, JSON.stringify(me));
+        this.offlineSession.set(false);
         const saved = Number(readStorage(ORGANIZATION_KEY));
         const known = me.memberships.some((item) => item.organization.id === saved);
         const chosen = known ? saved : (me.memberships[0]?.organization.id ?? null);
