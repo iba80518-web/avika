@@ -30,6 +30,7 @@ PERMISSIONS = [
     ("generate_reports", "Générer les rapports"),
     ("manage_users", "Gérer les utilisateurs"),
     ("manage_subscription", "Gérer l'abonnement"),
+    ("manage_settings", "Gérer les paramètres, le logo et les modèles de factures"),
     ("view_audit", "Consulter le journal d'audit"),
 ]
 
