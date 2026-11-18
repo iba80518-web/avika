@@ -1,0 +1,201 @@
+<div class="page">
+  <header>
+    <h1>Réglages</h1>
+    <p class="muted">
+      Personnalisez vos factures et vos reçus. L’aperçu montre ce que vos clients recevront.
+    </p>
+  </header>
+
+  @if (loadError(); as message) {
+    <div class="state glass" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  @if (loading() && !loadError()) {
+    <div class="skeleton glass" aria-busy="true"></div>
+  }
+
+  @if (!loading() && !loadError()) {
+    <div class="layout">
+      <form class="form glass" (submit)="onSubmit($event)" novalidate>
+        <h2>Vos coordonnées</h2>
+        <p class="muted">Laissé vide, un champ reprend les informations de votre exploitation.</p>
+
+        <div class="field">
+          <label for="business">Nom commercial</label>
+          <input id="business" type="text" maxlength="150" [placeholder]="defaults().name" [value]="business()" (input)="business.set(value($event))" />
+        </div>
+        <div class="field">
+          <label for="address">Adresse</label>
+          <input id="address" type="text" maxlength="255" [placeholder]="defaults().address" [value]="address()" (input)="address.set(value($event))" />
+        </div>
+        <div class="field">
+          <label for="phone">Téléphone</label>
+          <input id="phone" type="tel" maxlength="30" [placeholder]="defaults().phone" [value]="phone()" (input)="phone.set(value($event))" />
+        </div>
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" maxlength="254" [value]="email()" (input)="email.set(value($event))" />
+        </div>
+        <div class="two">
+          <div class="field">
+            <label for="tax-id">NIF</label>
+            <input id="tax-id" type="text" maxlength="60" [value]="taxId()" (input)="taxId.set(value($event))" />
+          </div>
+          <div class="field">
+            <label for="registry-id">RCCM</label>
+            <input id="registry-id" type="text" maxlength="60" [value]="registryId()" (input)="registryId.set(value($event))" />
+          </div>
+        </div>
+
+        <h2>Logo</h2>
+        <div class="logo-row">
+          @if (logoUrl(); as url) {
+            <img class="logo-thumb" [src]="url" alt="Logo actuel" />
+          } @else {
+            <span class="logo-empty">Aucun logo</span>
+          }
+          <div class="logo-actions">
+            <label class="btn btn--ghost" for="logo" [class.is-busy]="logoBusy()">
+              {{ logoBusy() ? 'Envoi…' : settings()?.has_logo ? 'Changer le logo' : 'Choisir un logo' }}
+            </label>
+            <input id="logo" class="sr-only" type="file" accept="image/png,image/jpeg,image/webp" [disabled]="logoBusy()" (change)="chooseLogo($event)" />
+            @if (settings()?.has_logo) {
+              <button type="button" class="btn btn--ghost" [disabled]="logoBusy()" (click)="removeLogo()">Retirer</button>
+            }
+          </div>
+        </div>
+        <p class="muted">Image JPEG, PNG ou WebP. Elle est réduite avant l’envoi pour économiser votre connexion.</p>
+        @if (logoError(); as message) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+
+        <h2>Apparence</h2>
+        <div class="field">
+          <label for="accent-text">Couleur principale</label>
+          <div class="color-row">
+            <input id="accent-color" class="color-pick" type="color" aria-label="Choisir la couleur" [value]="validAccent()" (input)="accent.set(value($event))" />
+            <input id="accent-text" type="text" maxlength="7" placeholder="#1F7A4D" [value]="accent()" (input)="accent.set(value($event))" />
+          </div>
+        </div>
+
+        <h2>Textes</h2>
+        <div class="field">
+          <label for="terms">Conditions de paiement</label>
+          <textarea id="terms" rows="2" maxlength="1000" placeholder="Ex. Paiement à 15 jours." [value]="terms()" (input)="terms.set(value($event))"></textarea>
+        </div>
+        <div class="field">
+          <label for="footer">Pied de page</label>
+          <textarea id="footer" rows="2" maxlength="1000" placeholder="Ex. Merci de votre confiance." [value]="footer()" (input)="footer.set(value($event))"></textarea>
+        </div>
+
+        <h2>Numérotation</h2>
+        <div class="two">
+          <div class="field">
+            <label for="invoice-prefix">Préfixe des factures</label>
+            <input id="invoice-prefix" type="text" maxlength="10" [value]="invoicePrefix()" (input)="invoicePrefix.set(value($event))" />
+          </div>
+          <div class="field">
+            <label for="receipt-prefix">Préfixe des reçus</label>
+            <input id="receipt-prefix" type="text" maxlength="10" [value]="receiptPrefix()" (input)="receiptPrefix.set(value($event))" />
+          </div>
+        </div>
+        <p class="muted">Les numéros se suivent sans trou : {{ docNumber() }}, puis -0002, -0003…</p>
+
+        @if (formError(); as message) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+        @if (notice(); as message) {
+          <p class="form-ok" role="status">{{ message }}</p>
+        }
+
+        <button type="submit" class="btn" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement…' : 'Enregistrer les réglages' }}
+        </button>
+      </form>
+
+      <aside class="preview" aria-label="Aperçu du document">
+        <div class="preview-bar">
+          <span class="preview-title">Aperçu</span>
+          <div class="toggle" role="group" aria-label="Type de document">
+            <button type="button" [class.is-on]="mode() === 'invoice'" [attr.aria-pressed]="mode() === 'invoice'" (click)="mode.set('invoice')">Facture</button>
+            <button type="button" [class.is-on]="mode() === 'receipt'" [attr.aria-pressed]="mode() === 'receipt'" (click)="mode.set('receipt')">Reçu</button>
+          </div>
+        </div>
+
+        <div class="sheet" [style.--accent]="validAccent()">
+          <div class="sheet-head">
+            <div class="issuer">
+              @if (logoUrl(); as url) {
+                <img class="logo" [src]="url" alt="Logo" />
+              }
+              <strong class="issuer-name">{{ previewName() || 'Nom de votre exploitation' }}</strong>
+              @if (previewAddress()) { <span>{{ previewAddress() }}</span> }
+              @if (previewPhone()) { <span>Tél : {{ previewPhone() }}</span> }
+              @if (email().trim()) { <span>{{ email().trim() }}</span> }
+              @if (taxId().trim()) { <span>NIF : {{ taxId().trim() }}</span> }
+              @if (registryId().trim()) { <span>RCCM : {{ registryId().trim() }}</span> }
+            </div>
+            <div class="doc">
+              <span class="doc-title">{{ docTitle() }}</span>
+              <span class="doc-number">N° {{ docNumber() }}</span>
+              <span>Émis le {{ today }}</span>
+            </div>
+          </div>
+
+          <div class="sheet-meta">
+            <div>
+              <span class="tag">{{ mode() === 'invoice' ? 'FACTURÉ À' : 'REÇU DE' }}</span>
+              <strong>Mamadou Diallo</strong>
+              <span>622 11 22 33 · Matoto</span>
+            </div>
+            <div>
+              <span class="tag">VENTE</span>
+              <strong>N° 12 du {{ today }}</strong>
+              <span>Bande : Chair A</span>
+            </div>
+          </div>
+
+          <table class="lines">
+            <thead>
+              <tr><th>Désignation</th><th>Quantité</th><th>Prix unitaire</th><th>Montant</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Poulets</td>
+                <td>100 sujet(s)</td>
+                <td>{{ money(5000, defaults().currency) }}</td>
+                <td>{{ money(500000, defaults().currency) }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          @if (mode() === 'receipt') {
+            <div class="received">
+              <span class="tag">MONTANT REÇU</span>
+              <strong>{{ money(200000, defaults().currency) }}</strong>
+              <span>Mobile money — le {{ today }}</span>
+            </div>
+          }
+
+          <dl class="totals">
+            <div><dt>{{ mode() === 'invoice' ? 'Total' : 'Total de la vente' }}</dt><dd>{{ money(500000, defaults().currency) }}</dd></div>
+            <div><dt>{{ mode() === 'invoice' ? 'Déjà payé' : 'Cumul payé (ce paiement inclus)' }}</dt><dd>{{ money(200000, defaults().currency) }}</dd></div>
+            <div class="due"><dt>Reste à payer</dt><dd>{{ money(300000, defaults().currency) }}</dd></div>
+          </dl>
+
+          @if (terms().trim()) {
+            <p class="tag">CONDITIONS DE PAIEMENT</p>
+            <p class="small">{{ terms().trim() }}</p>
+          }
+          @if (footer().trim()) {
+            <p class="foot">{{ footer().trim() }}</p>
+          }
+        </div>
+        <p class="muted">Exemple de contenu : seuls les textes, le logo, la couleur et les numéros viennent de vos réglages.</p>
+      </aside>
+    </div>
+  }
+</div>

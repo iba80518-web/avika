@@ -67,6 +67,12 @@ export class Shell {
       path: '/sante',
       permission: 'manage_health',
     },
+    {
+      label: 'Réglages',
+      icon: 'M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6',
+      path: '/reglages',
+      permission: 'manage_settings',
+    },
   ];
 
   protected readonly visibleNav = computed(() =>

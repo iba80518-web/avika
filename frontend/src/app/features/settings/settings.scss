@@ -1,0 +1,361 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 72rem;
+  margin: 0 auto;
+
+  h1 {
+    font-size: clamp(1.7rem, 5vw, 2.3rem);
+  }
+}
+
+.muted {
+  color: var(--ink-soft);
+  font-size: 0.925rem;
+}
+
+.layout {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.1rem, 4vw, 1.75rem);
+
+  h2 {
+    margin-top: 0.5rem;
+    font-size: 1.15rem;
+  }
+}
+
+.two {
+  display: grid;
+  gap: 1rem;
+}
+
+.field textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--glass-strong);
+  resize: vertical;
+}
+
+.field textarea:focus-visible {
+  outline: none;
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--leaf) 22%, transparent);
+}
+
+.color-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.color-pick {
+  flex: none;
+  width: 56px;
+  min-height: 52px;
+  padding: 0.25rem;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: var(--radius-md);
+  background: var(--glass-strong);
+  cursor: pointer;
+}
+
+.logo-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logo-thumb {
+  max-width: 8rem;
+  max-height: 4.5rem;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: 0.35rem;
+}
+
+.logo-empty {
+  display: grid;
+  place-items: center;
+  width: 8rem;
+  height: 4.5rem;
+  border: 1.5px dashed var(--glass-edge);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.logo-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  .btn {
+    cursor: pointer;
+  }
+
+  .is-busy {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.form-error {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.925rem;
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.form-ok {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.925rem;
+  color: var(--leaf-strong);
+  background: color-mix(in srgb, var(--leaf) 14%, transparent);
+}
+
+.state {
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.skeleton {
+  min-height: 18rem;
+  background: linear-gradient(100deg, var(--glass) 30%, var(--glass-strong) 50%, var(--glass) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* --- Aperçu : une feuille de papier blanche, quel que soit le thème de l'application --- */
+.preview {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.preview-title {
+  font-weight: 700;
+}
+
+.toggle {
+  display: flex;
+  gap: 0.25rem;
+
+  button {
+    min-height: 40px;
+    padding: 0 1rem;
+    border: 1.5px solid var(--glass-edge);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-weight: 650;
+    color: var(--ink);
+    background: var(--glass);
+    cursor: pointer;
+  }
+
+  button.is-on {
+    color: var(--on-leaf);
+    background: var(--leaf);
+    border-color: var(--leaf);
+  }
+}
+
+.sheet {
+  --accent: #1f7a4d;
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(0.9rem, 3vw, 1.5rem);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: #1b1b1b;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  overflow-wrap: anywhere;
+
+  span {
+    display: block;
+    color: #555;
+  }
+
+  .sheet-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .issuer-name {
+    font-size: 1rem;
+    color: #1b1b1b;
+  }
+
+  .logo {
+    max-width: 7.5rem;
+    max-height: 3.5rem;
+    margin-bottom: 0.35rem;
+    object-fit: contain;
+  }
+
+  .doc {
+    text-align: right;
+  }
+
+  .doc-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .doc-number {
+    font-weight: 700;
+    color: #1b1b1b;
+  }
+
+  .sheet-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+  }
+
+  .lines {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      padding: 0.45rem 0.5rem;
+      text-align: right;
+      color: #fff;
+      background: var(--accent);
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    td {
+      padding: 0.45rem 0.5rem;
+      text-align: right;
+      border-bottom: 1px solid #ddd;
+    }
+  }
+
+  .received {
+    padding: 0.6rem 0.8rem;
+    border: 1.5px solid var(--accent);
+    border-radius: 6px;
+
+    strong {
+      display: block;
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+  }
+
+  .totals {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0 0 0 auto;
+    min-width: 55%;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    dd {
+      margin: 0;
+    }
+
+    .due {
+      padding-top: 0.3rem;
+      border-top: 1.5px solid var(--accent);
+      font-weight: 800;
+      color: var(--accent);
+    }
+  }
+
+  .small {
+    margin: 0;
+    color: #555;
+  }
+
+  .foot {
+    margin: 0;
+    text-align: center;
+    color: #555;
+  }
+}
+
+@media (min-width: 640px) {
+  .two {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1000px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .preview {
+    position: sticky;
+    top: 1rem;
+  }
+}

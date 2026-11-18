@@ -37,3 +37,26 @@ export async function compressImage(file: Blob, maxSide = 1280, quality = 0.72):
     return file;
   }
 }
+
+// Réduit un logo avant l'envoi : PNG (la transparence est conservée), 600 px au plus.
+// En cas d'échec (navigateur ancien, mémoire), on renvoie l'original : le serveur le réduira.
+export async function compressLogo(file: Blob, maxSide = 600): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const { width, height } = fitWithin(bitmap.width, bitmap.height, maxSide);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+    return blob && blob.size < file.size ? blob : file;
+  } catch {
+    return file;
+  }
+}
