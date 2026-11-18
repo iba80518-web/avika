@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, firstValueFrom, forkJoin, of } from 'rxjs';
 
 import { firstMessage } from '../../core/api-errors';
 import { localToday, shortDate } from '../../core/dates';
@@ -8,6 +8,9 @@ import { Cycle, Page } from '../../core/farming.models';
 import { FarmingService } from '../../core/farming.service';
 import { PaymentMethod, Sale, SalePayment } from '../../core/finance.models';
 import { FinanceService } from '../../core/finance.service';
+import { DocumentKind } from '../../core/documents.models';
+import { DocumentService } from '../../core/documents.service';
+import { downloadBlob } from '../../core/download';
 import { formatMoney } from '../../core/money';
 import { parseNumber } from '../../core/numbers';
 import { newUuid } from '../../core/uuid';
@@ -33,6 +36,7 @@ export class SaleDetail {
   protected readonly tier = tierLabel;
   private readonly finance = inject(FinanceService);
   private readonly farming = inject(FarmingService);
+  private readonly documents = inject(DocumentService);
   private readonly saleId = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
 
   protected readonly methods: { value: PaymentMethod; label: string }[] = [
@@ -62,6 +66,12 @@ export class SaleDetail {
   protected readonly reason = signal('');
   protected readonly cancelling = signal(false);
   protected readonly cancelError = signal<string | null>(null);
+
+  // Documents : nom saisi pour une vente de passage, document en cours de création, erreur.
+  protected readonly guestName = signal('');
+  protected readonly docBusy = signal<string | null>(null);
+  protected readonly docError = signal<string | null>(null);
+  protected readonly canShare = typeof navigator !== 'undefined' && typeof navigator.canShare === 'function';
 
   // Gardé tant que le paiement n'a pas réussi : un nouvel essai ne peut pas l'encaisser deux fois.
   private pendingUuid = newUuid();
@@ -200,6 +210,43 @@ export class SaleDetail {
         this.cancelling.set(false);
       },
     });
+  }
+
+  // Émet (ou retrouve) la facture de la vente, ou le reçu d'un paiement, puis télécharge ou partage le PDF.
+  // Le serveur renvoie le même document si on redemande : pas de doublon, pas de trou dans les numéros.
+  protected async openDocument(kind: DocumentKind, share: boolean, paymentId?: number): Promise<void> {
+    const sale = this.sale();
+    if (!sale || this.docBusy() !== null) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      this.docError.set(
+        'Pas de connexion : les factures et les reçus se créent en ligne. Réessayez quand le réseau revient.',
+      );
+      return;
+    }
+    this.docBusy.set(paymentId === undefined ? kind : `${kind}-${paymentId}`);
+    this.docError.set(null);
+    const customerName = sale.customer === null ? this.guestName().trim() : '';
+    const target = paymentId === undefined ? { kind, sale: sale.id } : { kind, payment: paymentId };
+    try {
+      const document = await firstValueFrom(
+        this.documents.issue(customerName ? { ...target, customer_name: customerName } : target),
+      );
+      const blob = await firstValueFrom(this.documents.pdf(document));
+      const filename = `${document.number}.pdf`;
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      if (share && this.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: document.number });
+      } else {
+        downloadBlob(blob, filename);
+      }
+    } catch (error: unknown) {
+      // Fermer le menu de partage n'est pas une erreur.
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        this.docError.set(firstMessage(error, 'Le document n’a pas pu être créé. Réessayez dans un instant.'));
+      }
+    } finally {
+      this.docBusy.set(null);
+    }
   }
 
   private refresh(): void {

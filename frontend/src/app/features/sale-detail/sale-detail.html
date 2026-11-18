@@ -101,10 +101,44 @@
               <strong>{{ money(p.amount) }}</strong>
               <span class="muted">{{ shortDate(p.payment_date) }} · {{ methodLabel(p.method) }}</span>
             </div>
+            <div class="doc-actions">
+              <button type="button" class="btn btn--ghost mini" [disabled]="docBusy() !== null" (click)="openDocument('receipt', false, p.id)">
+                {{ docBusy() === 'receipt-' + p.id ? 'Création…' : 'Reçu' }}
+              </button>
+              @if (canShare) {
+                <button type="button" class="btn btn--ghost mini" [disabled]="docBusy() !== null" (click)="openDocument('receipt', true, p.id)">Partager</button>
+              }
+            </div>
           </li>
         }
       </ul>
     </section>
+
+    @if (s.status === 'active') {
+      <section class="card glass">
+        <h2>Facture</h2>
+        @if (s.customer === null) {
+          <div class="field">
+            <label for="guest-name">Nom du client (facultatif)</label>
+            <input id="guest-name" type="text" maxlength="150" placeholder="Client de passage" [value]="guestName()" (input)="guestName.set(value($event))" />
+            <span class="muted">Vente sans client enregistré : ce nom figurera sur la facture et sur les reçus.</span>
+          </div>
+        } @else {
+          <p class="muted">Le nom, le téléphone et l’adresse de {{ s.customer_name }} figurent sur les documents.</p>
+        }
+        <div class="doc-actions">
+          <button type="button" class="btn" [disabled]="docBusy() !== null" (click)="openDocument('invoice', false)">
+            {{ docBusy() === 'invoice' ? 'Création…' : 'Télécharger la facture' }}
+          </button>
+          @if (canShare) {
+            <button type="button" class="btn btn--ghost" [disabled]="docBusy() !== null" (click)="openDocument('invoice', true)">Partager</button>
+          }
+        </div>
+        @if (docError(); as message) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+      </section>
+    }
 
     @if (canCancel()) {
       <section class="card glass">

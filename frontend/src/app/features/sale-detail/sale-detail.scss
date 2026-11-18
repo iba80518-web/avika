@@ -207,3 +207,15 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+.doc-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.mini {
+  min-height: 40px;
+  padding: 0 0.9rem;
+}
