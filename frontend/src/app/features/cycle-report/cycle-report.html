@@ -1,0 +1,27 @@
+<section class="card glass">
+  <h2>Rapport de la bande</h2>
+
+  @if (text() === null) {
+    <p class="muted">Un bilan prêt à envoyer par WhatsApp ou à imprimer en PDF.</p>
+    <button type="button" class="btn" [disabled]="busy() !== null" (click)="prepare()">
+      {{ busy() === 'text' ? 'Préparation…' : 'Préparer le rapport' }}
+    </button>
+  } @else {
+    <pre class="report" tabindex="0">{{ text() }}</pre>
+    <div class="actions">
+      <button type="button" class="btn" (click)="share()">Partager sur WhatsApp</button>
+      <button type="button" class="btn btn--ghost" (click)="copy()">Copier le texte</button>
+      <button type="button" class="btn btn--ghost" [disabled]="busy() !== null" (click)="downloadPdf()">
+        {{ busy() === 'pdf' ? 'Création…' : 'Télécharger le PDF' }}
+      </button>
+      <button type="button" class="btn btn--ghost" [disabled]="busy() !== null" (click)="prepare()">Actualiser</button>
+    </div>
+  }
+
+  @if (error(); as message) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+  @if (notice(); as message) {
+    <p class="form-ok" role="status">{{ message }}</p>
+  }
+</section>

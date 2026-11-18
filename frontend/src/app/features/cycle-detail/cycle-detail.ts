@@ -10,6 +10,7 @@ import { Cycle, CycleSummary, EventType, FlockEvent } from '../../core/farming.m
 import { FarmingService } from '../../core/farming.service';
 import { formatNumber } from '../../core/money';
 import { newUuid } from '../../core/uuid';
+import { CycleReport } from '../cycle-report/cycle-report';
 import { PhotoCapture } from '../photo-capture/photo-capture';
 
 const EVENT_LABELS: Record<EventType, string> = {
@@ -32,7 +33,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-cycle-detail',
-  imports: [RouterLink, PhotoCapture],
+  imports: [RouterLink, PhotoCapture, CycleReport],
   templateUrl: './cycle-detail.html',
   styleUrl: './cycle-detail.scss',
 })
@@ -77,6 +78,9 @@ export class CycleDetail {
     const rate = this.summary()?.mortality_rate ?? 0;
     return rate >= 8 ? 'danger' : rate >= 5 ? 'warn' : 'ok';
   });
+
+  // Numéro de la bande dans l'adresse de la page : le rapport est demandé pour cette bande.
+  protected readonly reportCycleId = Number(inject(ActivatedRoute).snapshot.paramMap.get('id'));
 
   constructor() {
     this.load();
